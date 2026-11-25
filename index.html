@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConectaPro — Guia de Profissionais</title>
+
+  <!-- Meta tags Open Graph para visualização ao compartilhar no WhatsApp -->
+  <meta name="description" content="Encontre profissionais de confiança na sua cidade ou divulgue gratuitamente seus serviços." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="ConectaPro — Guia de Profissionais" />
+  <meta property="og:description" content="Encontre pedreiros, eletricistas, encanadores, pintores, diaristas e muito mais na sua cidade, ou cadastre seu trabalho gratuitamente." />
+  <meta property="og:locale" content="pt_BR" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.22s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
+
+  <!-- =========================================================
+       CABEÇALHO MÍNIMO
+       ========================================================= -->
+  <header class="w-full bg-white/90 backdrop-blur border-b border-slate-200/80 sticky top-0 z-30">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+      <!-- Logotipo clicável à esquerda -->
+      <button
+        type="button"
+        id="btn-logo-home"
+        class="flex items-center gap-2.5 text-left group focus:outline-none rounded-xl p-1 -ml-1 cursor-pointer"
+        title="Voltar para a tela inicial"
+      >
+        <span class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm group-hover:bg-emerald-700 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </span>
+        <span class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900">
+          Conecta<span class="text-emerald-600">Pro</span>
+        </span>
+      </button>
+
+      <!-- Pílula de status Google Sheets + Botão discreto Início -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          id="btn-open-sheets"
+          class="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold border transition shadow-2xs cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+        >
+          <span id="sheets-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span id="sheets-status-label">Planilha Conectada</span>
+        </button>
+
+        <button
+          type="button"
+          id="btn-header-inicio"
+          class="hidden items-center gap-1 px-3 py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+        >
+          Início
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       CONTEÚDO PRINCIPAL (3 TELAS)
+       ========================================================= -->
+  <main class="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col">
+
+    <!-- 1. TELA INICIAL: EXCLUSIVAMENTE OS DOIS BOTÕES GRANDES -->
+    <section id="view-inicio" class="flex-1 flex flex-col items-center justify-center my-auto py-8 fade-in">
+      <div class="w-full max-w-xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <!-- Botão Encontrar Profissional -->
+        <button
+          type="button"
+          id="btn-go-encontrar"
+          class="group relative flex flex-col items-center justify-center text-center p-8 sm:p-10 rounded-3xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer min-h-[190px] sm:min-h-[220px]"
+        >
+          <span class="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <span class="text-xl sm:text-2xl font-bold tracking-tight leading-snug">
+            Encontrar Profissional
+          </span>
+        </button>
+
+        <!-- Botão Cadastrar Profissional -->
+        <button
+          type="button"
+          id="btn-go-cadastrar"
+          class="group relative flex flex-col items-center justify-center text-center p-8 sm:p-10 rounded-3xl bg-white hover:bg-slate-50 active:scale-[0.99] text-slate-900 border-2 border-slate-200 hover:border-emerald-500 shadow-lg shadow-slate-200/50 transition-all cursor-pointer min-h-[190px] sm:min-h-[220px]"
+        >
+          <span class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </span>
+          <span class="text-xl sm:text-2xl font-bold tracking-tight leading-snug">
+            Cadastrar Profissional
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. TELA ENCONTRAR PROFISSIONAL -->
+    <section id="view-encontrar" class="hidden flex-col fade-in">
+      <!-- Barra superior discreta -->
+      <div class="flex items-center justify-between gap-2 mb-5">
+        <button
+          type="button"
+          data-back-home
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 py-2 px-2.5 -ml-2.5 rounded-xl hover:bg-slate-200/60 transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Voltar ao início
+        </button>
+
+        <button
+          type="button"
+          id="btn-refresh-sheets"
+          class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 py-1.5 px-3 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 shadow-2xs transition cursor-pointer"
+          title="Sincronizar dados da planilha agora"
+        >
+          <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span id="refresh-label">Atualizar lista</span>
+        </button>
+      </div>
+
+      <!-- Campo de busca unificado + Autocomplete -->
+      <div class="relative w-full">
+        <div class="relative flex items-center">
+          <span class="absolute left-4 text-slate-400 pointer-events-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="search-input"
+            autocomplete="off"
+            placeholder="Digite aqui..."
+            class="w-full pl-12 pr-12 py-4 text-base sm:text-lg bg-white border-2 border-slate-200 focus:border-emerald-500 rounded-2xl shadow-sm outline-none transition placeholder:text-slate-400"
+          />
+          <button
+            type="button"
+            id="btn-clear-search"
+            class="hidden absolute right-3.5 w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+            title="Limpar pesquisa"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Dropdown de sugestões da busca -->
+        <ul
+          id="search-suggestions"
+          class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-64 overflow-y-auto z-20 divide-y divide-slate-100"
+        ></ul>
+      </div>
+
+      <!-- Dica discreta em itálico (some suavemente ao digitar) -->
+      <p
+        id="search-hint"
+        class="mt-2.5 px-1 text-xs sm:text-sm italic text-slate-400 transition-all duration-200"
+      >
+        Pesquise por cidade, profissão ou nome do profissional
+      </p>
+
+      <!-- Container de resultados (vazio inicialmente) -->
+      <div id="search-results-wrapper" class="hidden mt-6 flex-col gap-3">
+        <div class="flex items-center justify-between px-1">
+          <span id="results-count" class="text-xs font-semibold uppercase tracking-wider text-slate-400"></span>
+        </div>
+        <div id="results-list" class="grid grid-cols-1 gap-3.5"></div>
+      </div>
+    </section>
+
+    <!-- 3. TELA CADASTRAR PROFISSIONAL -->
+    <section id="view-cadastrar" class="hidden flex-col fade-in">
+      <!-- Barra superior discreta -->
+      <div class="mb-5">
+        <button
+          type="button"
+          data-back-home
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 py-2 px-2.5 -ml-2.5 rounded-xl hover:bg-slate-200/60 transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Voltar ao início
+        </button>
+      </div>
+
+      <!-- Card do Formulário -->
+      <div id="register-form-card" class="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-8 shadow-sm">
+        <form id="form-cadastro" novalidate class="space-y-5">
+          <!-- Campo: Nome -->
+          <div>
+            <label for="input-nome" class="block text-sm font-semibold text-slate-700 mb-1.5">
+              Nome <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="input-nome"
+              name="nome"
+              required
+              placeholder="Seu nome completo"
+              class="w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition text-base"
+            />
+            <p id="err-nome" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+          </div>
+
+          <!-- Campo: Profissão + Opção de cadastrar nova profissão -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="select-profissao" class="block text-sm font-semibold text-slate-700">
+                Profissão <span class="text-rose-500">*</span>
+              </label>
+              <button
+                type="button"
+                id="btn-toggle-new-prof"
+                class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+              >
+                + Nova profissão
+              </button>
+            </div>
+
+            <select
+              id="select-profissao"
+              name="profissao"
+              class="w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition text-base bg-white"
+            >
+              <option value="">Selecione sua profissão...</option>
+            </select>
+
+            <!-- Mini-campo inline para criar nova profissão -->
+            <div id="new-prof-box" class="hidden mt-2.5 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2.5">
+              <label for="input-new-prof" class="block text-xs font-semibold text-emerald-900">
+                Nome da nova profissão:
+              </label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  id="input-new-prof"
+                  placeholder="Ex.: Serralheiro, Gesseiro, Técnico de TI..."
+                  class="flex-1 px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white focus:border-emerald-600 outline-none text-sm"
+                />
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    id="btn-save-new-prof"
+                    class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition cursor-pointer"
+                  >
+                    Adicionar
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-cancel-new-prof"
+                    class="px-3 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 text-sm font-medium transition cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p id="err-profissao" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+          </div>
+
+          <!-- Campo: Cidade com Autocomplete -->
+          <div class="relative">
+            <label for="input-cidade" class="block text-sm font-semibold text-slate-700 mb-1.5">
+              Cidade <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="input-cidade"
+              name="cidade"
+              required
+              autocomplete="off"
+              placeholder="Digite o nome da sua cidade..."
+              class="w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition text-base"
+            />
+            <ul
+              id="city-suggestions"
+              class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-56 overflow-y-auto z-20 divide-y divide-slate-100"
+            ></ul>
+            <p id="err-cidade" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+          </div>
+
+          <!-- Campo: WhatsApp com DDD (só números) -->
+          <div>
+            <label for="input-whatsapp" class="block text-sm font-semibold text-slate-700 mb-1.5">
+              WhatsApp com DDD (só números) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="tel"
+              id="input-whatsapp"
+              name="whatsapp"
+              inputmode="numeric"
+              maxlength="11"
+              required
+              placeholder="Ex.: 11999998888"
+              class="w-full px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition text-base tracking-wide"
+            />
+            <p id="err-whatsapp" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+          </div>
+
+          <!-- Caixa obrigatória de autorização -->
+          <div class="pt-1">
+            <label class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 cursor-pointer hover:bg-slate-100/70 transition">
+              <input
+                type="checkbox"
+                id="check-autorizo"
+                required
+                class="mt-0.5 w-5 h-5 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+              />
+              <span class="text-sm text-slate-700 font-medium leading-snug select-none">
+                Autorizo divulgar meu nome e WhatsApp neste app <span class="text-rose-500">*</span>
+              </span>
+            </label>
+            <p id="err-autorizo" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+          </div>
+
+          <!-- Botão Enviar -->
+          <button
+            type="submit"
+            id="btn-submit-cadastro"
+            class="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-base sm:text-lg shadow-md shadow-emerald-600/20 transition cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span id="submit-btn-text">Salvar Cadastro</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Tela de Confirmação após cadastro -->
+      <div id="register-success-card" class="hidden bg-white border border-emerald-200 rounded-3xl p-6 sm:p-10 shadow-sm text-center fade-in">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-9 h-9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Cadastro realizado com sucesso!</h2>
+        <p id="register-sync-note" class="text-sm text-slate-600 mb-6">
+          Seus dados já estão disponíveis na busca.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            type="button"
+            id="btn-success-search"
+            class="py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm sm:text-base transition cursor-pointer"
+          >
+            Buscar agora
+          </button>
+          <button
+            type="button"
+            id="btn-success-another"
+            class="py-3.5 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm sm:text-base transition cursor-pointer"
+          >
+            Cadastrar outro
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================
+       MODAL DE CONFIGURAÇÃO DO GOOGLE SHEETS
+       ========================================================= -->
+  <div
+    id="sheets-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div id="sheets-modal-panel" class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl border border-slate-200 my-auto fade-in">
+      <div class="flex items-center justify-between gap-3 pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </span>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base sm:text-lg">Conexão Google Sheets</h3>
+            <p id="modal-status-subtitle" class="text-xs text-emerald-700 font-medium">Conectado ao Apps Script</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          id="btn-close-sheets-modal"
+          class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+          title="Fechar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <!-- Input URL -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="input-sheets-url" class="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              URL do App da Web (/exec)
+            </label>
+            <button
+              type="button"
+              id="btn-restore-default-url"
+              class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+            >
+              Restaurar URL padrão
+            </button>
+          </div>
+          <input
+            type="url"
+            id="input-sheets-url"
+            placeholder="https://script.google.com/macros/s/.../exec"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none text-xs sm:text-sm font-mono text-slate-700"
+          />
+        </div>
+
+        <!-- Feedback do teste / salvamento -->
+        <div id="sheets-feedback" class="hidden p-3 rounded-xl text-xs sm:text-sm font-medium"></div>
+
+        <!-- Botões de ação -->
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="btn-test-sheets"
+            class="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs sm:text-sm transition cursor-pointer"
+          >
+            Testar conexão
+          </button>
+          <button
+            type="button"
+            id="btn-save-sheets"
+            class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm transition cursor-pointer"
+          >
+            Salvar e Sincronizar
+          </button>
+        </div>
+
+        <!-- Bloco copiável do código Apps Script -->
+        <div class="pt-3 border-t border-slate-100">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-slate-600">Código Apps Script (JSON + JSONP):</span>
+            <button
+              type="button"
+              id="btn-copy-apps-script"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer"
+            >
+              <span id="copy-script-label">Copiar código do Apps Script</span>
+            </button>
+          </div>
+          <pre id="apps-script-code" class="max-h-40 overflow-auto rounded-2xl bg-slate-900 text-slate-100 p-3.5 text-[11px] font-mono leading-relaxed select-all">const SHEET_NAME = 'Profissionais';
+const HEADERS = ['ID', 'Nome', 'Profissao', 'Cidade', 'WhatsApp', 'DataCadastro'];
+
+function getSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
+  if (sheet.getLastRow() === 0) sheet.appendRow(HEADERS);
+  return sheet;
+}
+
+function sendResponse(obj, callback) {
+  const json = JSON.stringify(obj);
+  if (callback) {
+    const safe = String(callback).replace(/[^a-zA-Z0-9_$.]/g, '');
+    return ContentService.createTextOutput(safe + '(' + json + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  const cb = e &amp;&amp; e.parameter ? e.parameter.callback : null;
+  try {
+    const rows = getSheet().getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i &lt; rows.length; i++) {
+      const r = rows[i];
+      if (!r[1] &amp;&amp; !r[2] &amp;&amp; !r[4]) continue;
+      items.push({
+        id: String(r[0] || ('gs-' + (i + 1))),
+        nome: String(r[1] || '').trim(),
+        profissao: String(r[2] || '').trim(),
+        cidade: String(r[3] || '').trim(),
+        whatsapp: String(r[4] || '').replace(/\D/g, ''),
+        criadoEm: String(r[5] || '')
+      });
+    }
+    return sendResponse({ status: 'ok', ok: true, items: items.reverse() }, cb);
+  } catch (err) {
+    return sendResponse({ status: 'error', ok: false, message: err.message }, cb);
+  }
+}
+
+function doPost(e) {
+  try {
+    const sheet = getSheet();
+    const data = JSON.parse(e.postData.contents);
+    const id = String(data.id || Date.now());
+    const agora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
+    sheet.appendRow([
+      id,
+      String(data.nome || '').trim(),
+      String(data.profissao || '').trim(),
+      String(data.cidade || '').trim(),
+      String(data.whatsapp || '').replace(/\D/g, ''),
+      agora
+    ]);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'ok', ok: true, id: id }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', ok: false, message: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+          <p class="mt-2 text-[11px] text-slate-500 leading-relaxed">
+            Para atualizar o script na planilha: <strong>Implantar &gt; Gerenciar implantações &gt; Editar &gt; Versão: Nova versão &gt; Implantar</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast discreto para feedback de cópia e sincronização -->
+  <div
+    id="toast-banner"
+    class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900 text-white text-xs sm:text-sm font-medium shadow-lg"
+  ></div>
+
+  <!-- =========================================================
+       JAVASCRIPT PURO (ENCAPSULADO E DEFENSIVO)
+       ========================================================= -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        // ---------------------------------------------------------
+        // 1. URL OFICIAL FIXADA NA CONSTANTE
+        // ---------------------------------------------------------
+        const DEFAULT_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBwhPlJxf-U-6Rz2zN30y4mfPl8SUjUwmthKsylZqnrJ73tmmUeVxcg7tkgsu9mkqt0Q/exec";
+
+        const KEYS = {
+          PROFESSIONALS: 'conectapro_professionals_v4',
+          PROFESSIONS: 'conectapro_professions_v4',
+          SHEETS_URL_CUSTOM: 'conectapro_sheets_url_custom_v4',
+          CITIES_CACHE: 'conectapro_cities_ibge_v4'
+        };
+
+        const DEFAULT_PROFESSIONS = [
+          'Pedreiro',
+          'Eletricista',
+          'Encanador',
+          'Pintor',
+          'Diarista',
+          'Jardineiro',
+          'Marceneiro',
+          'Técnico em Refrigeração',
+          'Montador de Móveis',
+          'Chaveiro'
+        ];
+
+        const INITIAL_CITIES = [
+          'Recife - PE', 'Olinda - PE', 'Jaboatão dos Guararapes - PE', 'Paulista - PE',
+          'Caruaru - PE', 'Petrolina - PE', 'Cabo de Santo Agostinho - PE', 'Camaragibe - PE',
+          'Garanhuns - PE', 'Vitória de Santo Antão - PE', 'Igarassu - PE', 'São Lourenço da Mata - PE',
+          'Goiana - PE', 'Aliança - PE', 'Timbaúba - PE', 'Carpina - PE', 'Nazaré da Mata - PE',
+          'Paudalho - PE', 'Limoeiro - PE', 'Surubim - PE', 'Belo Jardim - PE', 'Arcoverde - PE',
+          'Serra Talhada - PE', 'Salgueiro - PE', 'Gravatá - PE', 'Santa Cruz do Capibaribe - PE',
+          'São Paulo - SP', 'Guarulhos - SP', 'Campinas - SP', 'São Bernardo do Campo - SP',
+          'Santo André - SP', 'Osasco - SP', 'Sorocaba - SP', 'Ribeirão Preto - SP', 'Santos - SP',
+          'Rio de Janeiro - RJ', 'São Gonçalo - RJ', 'Duque de Caxias - RJ', 'Niterói - RJ',
+          'Belo Horizonte - MG', 'Uberlândia - MG', 'Contagem - MG', 'Juiz de Fora - MG',
+          'Salvador - BA', 'Feira de Santana - BA', 'Vitória da Conquista - BA',
+          'Fortaleza - CE', 'Caucaia - CE', 'Juazeiro do Norte - CE',
+          'Brasília - DF', 'Curitiba - PR', 'Londrina - PR', 'Maringá - PR',
+          'Porto Alegre - RS', 'Caxias do Sul - RS', 'Manaus - AM', 'Belém - PA',
+          'Goiânia - GO', 'Aparecida de Goiânia - GO', 'Florianópolis - SC', 'Joinville - SC',
+          'João Pessoa - PB', 'Campina Grande - PB', 'Natal - RN', 'Mossoró - RN',
+          'Maceió - AL', 'Arapiraca - AL', 'Aracaju - SE', 'Teresina - PI', 'São Luís - MA',
+          'Campo Grande - MS', 'Cuiabá - MT', 'Vitória - ES', 'Vila Velha - ES'
+        ];
+
+        const SAMPLE_PROFESSIONALS = [
+          { id: 'demo-1', nome: 'Carlos Eduardo Silva', profissao: 'Eletricista', cidade: 'Recife - PE', whatsapp: '81998765432' },
+          { id: 'demo-2', nome: 'Mariana Souza', profissao: 'Diarista', cidade: 'Aliança - PE', whatsapp: '81991234567' },
+          { id: 'demo-3', nome: 'José Roberto Lima', profissao: 'Pedreiro', cidade: 'Goiana - PE', whatsapp: '81988776655' },
+          { id: 'demo-4', nome: 'Fernanda Oliveira', profissao: 'Pintor', cidade: 'São Paulo - SP', whatsapp: '11999998888' },
+          { id: 'demo-5', nome: 'Antônio Marcos', profissao: 'Encanador', cidade: 'Timbaúba - PE', whatsapp: '81987651234' }
+        ];
+
+        // ---------------------------------------------------------
+        // 2. UTILITÁRIOS SEGUROS
+        // ---------------------------------------------------------
+        function safeGetStorage(key, fallback) {
+          try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+          } catch (_) {
+            return fallback;
+          }
+        }
+
+        function safeSetStorage(key, value) {
+          try {
+            localStorage.setItem(key, JSON.stringify(value));
+          } catch (_) {}
+        }
+
+        function normalizeText(str) {
+          return String(str || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+        }
+
+        function escapeHtml(str) {
+          return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        function onlyDigits(str) {
+          return String(str || '').replace(/\D/g, '');
+        }
+
+        function formatPhone(digits) {
+          const clean = onlyDigits(digits);
+          if (clean.length === 11) {
+            return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
+          }
+          if (clean.length === 10) {
+            return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+          }
+          return clean;
+        }
+
+        function showToast(message) {
+          const toast = document.getElementById('toast-banner');
+          if (!toast) return;
+          toast.textContent = message;
+          toast.classList.remove('hidden');
+          clearTimeout(toast._timer);
+          toast._timer = setTimeout(() => {
+            toast.classList.add('hidden');
+          }, 2600);
+        }
+
+        function copyTextFallback(text) {
+          try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            return true;
+          } catch (_) {
+            return false;
+          }
+        }
+
+        // ---------------------------------------------------------
+        // 3. ESTADO DO APLICATIVO
+        // ---------------------------------------------------------
+        let professionals = safeGetStorage(KEYS.PROFESSIONALS, SAMPLE_PROFESSIONALS);
+        let professions = safeGetStorage(KEYS.PROFESSIONS, [...DEFAULT_PROFESSIONS]);
+        let citiesList = Array.from(new Set([...INITIAL_CITIES, ...safeGetStorage(KEYS.CITIES_CACHE, [])]));
+        let isSyncing = false;
+        let lastRegisteredQuery = '';
+
+        // Prioriza DEFAULT_APPS_SCRIPT_URL sempre que não houver customização manual explícita
+        function getActiveSheetsUrl() {
+          try {
+            const custom = localStorage.getItem(KEYS.SHEETS_URL_CUSTOM);
+            if (custom && custom.trim().startsWith('https://script.google.com/')) {
+              return custom.trim();
+            }
+          } catch (_) {}
+          return DEFAULT_APPS_SCRIPT_URL;
+        }
+
+        // ---------------------------------------------------------
+        // 4. ELEMENTOS DO DOM
+        // ---------------------------------------------------------
+        const viewInicio = document.getElementById('view-inicio');
+        const viewEncontrar = document.getElementById('view-encontrar');
+        const viewCadastrar = document.getElementById('view-cadastrar');
+
+        const btnLogoHome = document.getElementById('btn-logo-home');
+        const btnHeaderInicio = document.getElementById('btn-header-inicio');
+        const btnGoEncontrar = document.getElementById('btn-go-encontrar');
+        const btnGoCadastrar = document.getElementById('btn-go-cadastrar');
+        const backHomeButtons = document.querySelectorAll('[data-back-home]');
+
+        const btnOpenSheets = document.getElementById('btn-open-sheets');
+        const sheetsStatusDot = document.getElementById('sheets-status-dot');
+        const sheetsStatusLabel = document.getElementById('sheets-status-label');
+
+        // Busca
+        const searchInput = document.getElementById('search-input');
+        const btnClearSearch = document.getElementById('btn-clear-search');
+        const searchHint = document.getElementById('search-hint');
+        const searchSuggestions = document.getElementById('search-suggestions');
+        const searchResultsWrapper = document.getElementById('search-results-wrapper');
+        const resultsCount = document.getElementById('results-count');
+        const resultsList = document.getElementById('results-list');
+        const btnRefreshSheets = document.getElementById('btn-refresh-sheets');
+        const refreshIcon = document.getElementById('refresh-icon');
+        const refreshLabel = document.getElementById('refresh-label');
+
+        // Cadastro
+        const registerFormCard = document.getElementById('register-form-card');
+        const registerSuccessCard = document.getElementById('register-success-card');
+        const registerSyncNote = document.getElementById('register-sync-note');
+        const formCadastro = document.getElementById('form-cadastro');
+        const inputNome = document.getElementById('input-nome');
+        const selectProfissao = document.getElementById('select-profissao');
+        const btnToggleNewProf = document.getElementById('btn-toggle-new-prof');
+        const newProfBox = document.getElementById('new-prof-box');
+        const inputNewProf = document.getElementById('input-new-prof');
+        const btnSaveNewProf = document.getElementById('btn-save-new-prof');
+        const btnCancelNewProf = document.getElementById('btn-cancel-new-prof');
+        const inputCidade = document.getElementById('input-cidade');
+        const citySuggestions = document.getElementById('city-suggestions');
+        const inputWhatsapp = document.getElementById('input-whatsapp');
+        const checkAutorizo = document.getElementById('check-autorizo');
+        const btnSubmitCadastro = document.getElementById('btn-submit-cadastro');
+        const submitBtnText = document.getElementById('submit-btn-text');
+        const btnSuccessSearch = document.getElementById('btn-success-search');
+        const btnSuccessAnother = document.getElementById('btn-success-another');
+
+        // Modal Sheets
+        const sheetsModal = document.getElementById('sheets-modal');
+        const btnCloseSheetsModal = document.getElementById('btn-close-sheets-modal');
+        const modalStatusSubtitle = document.getElementById('modal-status-subtitle');
+        const inputSheetsUrl = document.getElementById('input-sheets-url');
+        const btnRestoreDefaultUrl = document.getElementById('btn-restore-default-url');
+        const sheetsFeedback = document.getElementById('sheets-feedback');
+        const btnTestSheets = document.getElementById('btn-test-sheets');
+        const btnSaveSheets = document.getElementById('btn-save-sheets');
+        const btnCopyAppsScript = document.getElementById('btn-copy-apps-script');
+        const copyScriptLabel = document.getElementById('copy-script-label');
+        const appsScriptCode = document.getElementById('apps-script-code');
+
+        // ---------------------------------------------------------
+        // 5. NAVEGAÇÃO ENTRE AS 3 TELAS
+        // ---------------------------------------------------------
+        function showView(viewName) {
+          viewInicio.classList.add('hidden');
+          viewEncontrar.classList.add('hidden');
+          viewCadastrar.classList.add('hidden');
+
+          if (viewName === 'encontrar') {
+            viewEncontrar.classList.remove('hidden');
+            viewEncontrar.classList.add('flex');
+            btnHeaderInicio.classList.remove('hidden');
+            btnHeaderInicio.classList.add('inline-flex');
+            setTimeout(() => searchInput.focus(), 60);
+          } else if (viewName === 'cadastrar') {
+            viewCadastrar.classList.remove('hidden');
+            viewCadastrar.classList.add('flex');
+            btnHeaderInicio.classList.remove('hidden');
+            btnHeaderInicio.classList.add('inline-flex');
+            resetCadastroFormState();
+            setTimeout(() => inputNome.focus(), 60);
+          } else {
+            viewInicio.classList.remove('hidden');
+            viewInicio.classList.add('flex');
+            btnHeaderInicio.classList.add('hidden');
+            btnHeaderInicio.classList.remove('inline-flex');
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        btnLogoHome.addEventListener('click', () => showView('inicio'));
+        btnHeaderInicio.addEventListener('click', () => showView('inicio'));
+        btnGoEncontrar.addEventListener('click', () => showView('encontrar'));
+        btnGoCadastrar.addEventListener('click', () => showView('cadastrar'));
+        backHomeButtons.forEach((btn) => {
+          btn.addEventListener('click', () => showView('inicio'));
+        });
+
+        // ---------------------------------------------------------
+        // 6. INTEGRAÇÃO HÍBRIDA GOOGLE SHEETS (FETCH + JSONP / NO-CORS)
+        // ---------------------------------------------------------
+        function updateSheetsBadge() {
+          const url = getActiveSheetsUrl();
+          if (url) {
+            btnOpenSheets.className = 'inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold border transition shadow-2xs cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100';
+            sheetsStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+            sheetsStatusLabel.textContent = 'Planilha Conectada';
+            modalStatusSubtitle.textContent = 'Conectado ao Google Apps Script';
+            modalStatusSubtitle.className = 'text-xs text-emerald-700 font-medium';
+          } else {
+            btnOpenSheets.className = 'inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold border transition shadow-2xs cursor-pointer bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100';
+            sheetsStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+            sheetsStatusLabel.textContent = 'Modo Local';
+            modalStatusSubtitle.textContent = 'Nenhuma URL configurada';
+            modalStatusSubtitle.className = 'text-xs text-amber-700 font-medium';
+          }
+        }
+
+        function normalizeRecord(raw, index) {
+          if (!raw || typeof raw !== 'object') return null;
+          const nome = String(raw.nome || raw.Nome || '').trim();
+          const profissao = String(raw.profissao || raw.Profissao || raw['Profissão'] || '').trim();
+          const cidade = String(raw.cidade || raw.Cidade || '').trim();
+          const whatsapp = onlyDigits(raw.whatsapp || raw.WhatsApp || raw.telefone || '');
+          if (!nome && !profissao && !whatsapp) return null;
+          return {
+            id: String(raw.id || raw.ID || `sheet-${index + 1}`),
+            nome,
+            profissao,
+            cidade,
+            whatsapp
+          };
+        }
+
+        function extractRecordsFromPayload(payload) {
+          if (!payload) return null;
+          let arr = null;
+          if (Array.isArray(payload)) {
+            arr = payload;
+          } else if (typeof payload === 'object') {
+            if (payload.ok === false || payload.status === 'error') return null;
+            if (Array.isArray(payload.items)) arr = payload.items;
+            else if (Array.isArray(payload.professionals)) arr = payload.professionals;
+            else if (Array.isArray(payload.data)) arr = payload.data;
+          }
+          if (!arr) return null;
+          return arr.map(normalizeRecord).filter(Boolean);
+        }
+
+        function fetchViaJsonp(baseUrl, timeoutMs = 9500) {
+          return new Promise((resolve, reject) => {
+            const cbName = '__cp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+            const script = document.createElement('script');
+            let done = false;
+
+            const cleanup = () => {
+              if (script.parentNode) script.parentNode.removeChild(script);
+              try { delete window[cbName]; } catch (_) { window[cbName] = undefined; }
+            };
+
+            const timer = setTimeout(() => {
+              if (done) return;
+              done = true;
+              cleanup();
+              reject(new Error('Timeout JSONP'));
+            }, timeoutMs);
+
+            window[cbName] = function (data) {
+              if (done) return;
+              done = true;
+              clearTimeout(timer);
+              cleanup();
+              resolve(data);
+            };
+
+            script.onerror = function () {
+              if (done) return;
+              done = true;
+              clearTimeout(timer);
+              cleanup();
+              reject(new Error('Erro ao carregar JSONP'));
+            };
+
+            const sep = baseUrl.includes('?') ? '&' : '?';
+            script.src = `${baseUrl}${sep}callback=${encodeURIComponent(cbName)}&t=${Date.now()}`;
+            document.head.appendChild(script);
+          });
+        }
+
+        async function readFromAppsScript(url) {
+          const sep = url.includes('?') ? '&' : '?';
+          const fullUrl = `${url}${sep}t=${Date.now()}`;
+
+          try {
+            const res = await fetch(fullUrl, { method: 'GET', redirect: 'follow' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+            const parsed = extractRecordsFromPayload(json);
+            if (parsed !== null) {
+              return { records: parsed, via: 'fetch' };
+            }
+            throw new Error('Formato de resposta inválido');
+          } catch (fetchErr) {
+            const jsonpPayload = await fetchViaJsonp(url, 9500);
+            const parsedJsonp = extractRecordsFromPayload(jsonpPayload);
+            if (parsedJsonp !== null) {
+              return { records: parsedJsonp, via: 'jsonp' };
+            }
+            throw fetchErr;
+          }
+        }
+
+        async function syncFromSheets(silent = true) {
+          const url = getActiveSheetsUrl();
+          if (!url || isSyncing) return false;
+
+          isSyncing = true;
+          refreshIcon.classList.add('animate-spin');
+          refreshLabel.textContent = 'Sincronizando...';
+
+          try {
+            const { records } = await readFromAppsScript(url);
+            if (records.length > 0) {
+              professionals = records;
+              safeSetStorage(KEYS.PROFESSIONALS, professionals);
+
+              let updatedProfs = false;
+              records.forEach((r) => {
+                if (r.profissao && !professions.some((p) => normalizeText(p) === normalizeText(r.profissao))) {
+                  professions.push(r.profissao);
+                  updatedProfs = true;
+                }
+              });
+              if (updatedProfs) {
+                safeSetStorage(KEYS.PROFESSIONS, professions);
+                renderProfessionsSelect(selectProfissao.value);
+              }
+            }
+
+            if (!viewEncontrar.classList.contains('hidden') && searchInput.value.trim() !== '') {
+              renderSearchResults();
+            }
+            if (!silent) {
+              showToast(`Lista atualizada (${records.length} registro${records.length === 1 ? '' : 's'})`);
+            }
+            return true;
+          } catch (_) {
+            if (!silent) {
+              showToast('Não foi possível sincronizar agora');
+            }
+            return false;
+          } finally {
+            isSyncing = false;
+            refreshIcon.classList.remove('animate-spin');
+            refreshLabel.textContent = 'Atualizar lista';
+          }
+        }
+
+        async function saveToSheets(record) {
+          const url = getActiveSheetsUrl();
+          if (!url) return { ok: false };
+
+          const payloadStr = JSON.stringify({
+            id: record.id,
+            nome: record.nome,
+            profissao: record.profissao,
+            cidade: record.cidade,
+            whatsapp: record.whatsapp,
+            autorizado: true
+          });
+
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              redirect: 'follow',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: payloadStr
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return { ok: true, mode: 'cors' };
+          } catch (_) {
+            try {
+              await fetch(url, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: payloadStr
+              });
+              return { ok: true, mode: 'no-cors' };
+            } catch (err) {
+              return { ok: false, error: err };
+            }
+          }
+        }
+
+        // ---------------------------------------------------------
+        // 7. MODAL DE CONFIGURAÇÃO DO GOOGLE SHEETS
+        // ---------------------------------------------------------
+        function openSheetsModal() {
+          inputSheetsUrl.value = getActiveSheetsUrl();
+          sheetsFeedback.classList.add('hidden');
+          sheetsModal.classList.remove('hidden');
+        }
+
+        function closeSheetsModal() {
+          sheetsModal.classList.add('hidden');
+        }
+
+        function setSheetsFeedback(msg, type) {
+          sheetsFeedback.textContent = msg;
+          sheetsFeedback.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-rose-50', 'text-rose-700', 'bg-slate-100', 'text-slate-700');
+          if (type === 'success') {
+            sheetsFeedback.classList.add('bg-emerald-50', 'text-emerald-800');
+          } else if (type === 'error') {
+            sheetsFeedback.classList.add('bg-rose-50', 'text-rose-700');
+          } else {
+            sheetsFeedback.classList.add('bg-slate-100', 'text-slate-700');
+          }
+        }
+
+        btnOpenSheets.addEventListener('click', openSheetsModal);
+        btnCloseSheetsModal.addEventListener('click', closeSheetsModal);
+        sheetsModal.addEventListener('click', (e) => {
+          if (e.target === sheetsModal) closeSheetsModal();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !sheetsModal.classList.contains('hidden')) {
+            closeSheetsModal();
+          }
+        });
+
+        btnRestoreDefaultUrl.addEventListener('click', () => {
+          try { localStorage.removeItem(KEYS.SHEETS_URL_CUSTOM); } catch (_) {}
+          inputSheetsUrl.value = DEFAULT_APPS_SCRIPT_URL;
+          updateSheetsBadge();
+          setSheetsFeedback('URL padrão restaurada com sucesso!', 'success');
+        });
+
+        btnTestSheets.addEventListener('click', async () => {
+          const candidate = inputSheetsUrl.value.trim();
+          if (!candidate.startsWith('https://script.google.com/')) {
+            setSheetsFeedback('Cole uma URL válida começando com https://script.google.com/...', 'error');
+            return;
+          }
+          btnTestSheets.disabled = true;
+          setSheetsFeedback('Testando conexão com a planilha...', 'info');
+          try {
+            const { records, via } = await readFromAppsScript(candidate);
+            setSheetsFeedback(
+              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.`,
+              'success'
+            );
+          } catch (_) {
+            setSheetsFeedback(
+              'Falha ao ler dados. Verifique se publicou como App da Web com acesso para "Qualquer pessoa".',
+              'error'
+            );
+          } finally {
+            btnTestSheets.disabled = false;
+          }
+        });
+
+        btnSaveSheets.addEventListener('click', async () => {
+          const candidate = inputSheetsUrl.value.trim();
+          if (!candidate.startsWith('https://script.google.com/')) {
+            setSheetsFeedback('Informe uma URL válida do Google Apps Script (/exec).', 'error');
+            return;
+          }
+          try {
+            if (candidate === DEFAULT_APPS_SCRIPT_URL) {
+              localStorage.removeItem(KEYS.SHEETS_URL_CUSTOM);
+            } else {
+              localStorage.setItem(KEYS.SHEETS_URL_CUSTOM, candidate);
+            }
+          } catch (_) {}
+          updateSheetsBadge();
+          setSheetsFeedback('Salvando e sincronizando dados...', 'info');
+          const ok = await syncFromSheets(true);
+          if (ok) {
+            setSheetsFeedback(`Conectado com sucesso! (${professionals.length} profissional(is) sincronizado(s)).`, 'success');
+            setTimeout(closeSheetsModal, 850);
+          } else {
+            setSheetsFeedback('URL salva, mas não foi possível ler a planilha agora.', 'error');
+          }
+        });
+
+        btnCopyAppsScript.addEventListener('click', () => {
+          const code = appsScriptCode.textContent;
+          if (copyTextFallback(code)) {
+            copyScriptLabel.textContent = 'Código copiado!';
+            setTimeout(() => { copyScriptLabel.textContent = 'Copiar código do Apps Script'; }, 2200);
+          }
+        });
+
+        btnRefreshSheets.addEventListener('click', () => syncFromSheets(false));
+
+        // ---------------------------------------------------------
+        // 8. BUSCA UNIFICADA + AUTOCOMPLETE + CARDS DE RESULTADO
+        // ---------------------------------------------------------
+        function updateHintAndClearVisibility() {
+          const hasText = searchInput.value.trim().length > 0;
+          if (hasText) {
+            searchHint.classList.add('opacity-0', 'pointer-events-none', 'h-0', 'mt-0', 'overflow-hidden');
+            btnClearSearch.classList.remove('hidden');
+          } else {
+            searchHint.classList.remove('opacity-0', 'pointer-events-none', 'h-0', 'mt-0', 'overflow-hidden');
+            btnClearSearch.classList.add('hidden');
+          }
+        }
+
+        function buildSearchSuggestions(query) {
+          const norm = normalizeText(query);
+          if (norm.length < 1) {
+            searchSuggestions.classList.add('hidden');
+            return;
+          }
+
+          const suggestions = [];
+          const seen = new Set();
+
+          professions.forEach((p) => {
+            if (normalizeText(p).includes(norm) && !seen.has('p:' + normalizeText(p))) {
+              seen.add('p:' + normalizeText(p));
+              suggestions.push({ label: p, type: 'Profissão' });
+            }
+          });
+
+          citiesList.forEach((c) => {
+            if (normalizeText(c).includes(norm) && !seen.has('c:' + normalizeText(c))) {
+              seen.add('c:' + normalizeText(c));
+              suggestions.push({ label: c, type: 'Cidade' });
+            }
+          });
+
+          professionals.forEach((item) => {
+            if (item.nome && normalizeText(item.nome).includes(norm) && !seen.has('n:' + normalizeText(item.nome))) {
+              seen.add('n:' + normalizeText(item.nome));
+              suggestions.push({ label: item.nome, type: item.profissao || 'Profissional' });
+            }
+          });
+
+          const top = suggestions.slice(0, 7);
+          if (top.length === 0) {
+            searchSuggestions.classList.add('hidden');
+            return;
+          }
+
+          searchSuggestions.innerHTML = top
+            .map(
+              (s) => `
+              <li>
+                <button
+                  type="button"
+                  data-suggestion-val="${escapeHtml(s.label)}"
+                  class="w-full px-4 py-3 text-left hover:bg-emerald-50 flex items-center justify-between gap-2 transition cursor-pointer"
+                >
+                  <span class="text-sm font-medium text-slate-800">${escapeHtml(s.label)}</span>
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">${escapeHtml(s.type)}</span>
+                </button>
+              </li>
+            `
+            )
+            .join('');
+
+          searchSuggestions.classList.remove('hidden');
+        }
+
+        function renderSearchResults() {
+          const rawQuery = searchInput.value.trim();
+          updateHintAndClearVisibility();
+
+          if (!rawQuery) {
+            searchResultsWrapper.classList.add('hidden');
+            resultsList.innerHTML = '';
+            return;
+          }
+
+          const terms = normalizeText(rawQuery).split(/\s+/).filter(Boolean);
+          const filtered = professionals.filter((item) => {
+            const haystack = normalizeText(`${item.nome} ${item.profissao} ${item.cidade}`);
+            return terms.every((t) => haystack.includes(t));
+          });
+
+          searchResultsWrapper.classList.remove('hidden');
+          searchResultsWrapper.classList.add('flex');
+          resultsCount.textContent =
+            filtered.length === 0
+              ? 'Nenhum resultado'
+              : `${filtered.length} profissional${filtered.length === 1 ? '' : 'is'} encontrado${filtered.length === 1 ? '' : 's'}`;
+
+          if (filtered.length === 0) {
+            resultsList.innerHTML = `
+              <div class="bg-white border border-slate-200 rounded-3xl p-8 text-center">
+                <p class="text-slate-600 font-medium mb-1">Nenhum profissional encontrado para "${escapeHtml(rawQuery)}".</p>
+                <p class="text-xs text-slate-400">Tente buscar por outra cidade, profissão ou nome.</p>
+              </div>
+            `;
+            return;
+          }
+
+          resultsList.innerHTML = filtered
+            .map((pro) => {
+              const formattedPhone = formatPhone(pro.whatsapp);
+              const waDigits = onlyDigits(pro.whatsapp);
+              const waText = encodeURIComponent(
+                `Olá ${pro.nome}! Encontrei seu contato como ${pro.profissao} no ConectaPro.`
+              );
+              const waUrl = `https://wa.me/55${waDigits}?text=${waText}`;
+
+              return `
+                <article class="bg-white border border-slate-200/90 hover:border-emerald-300 rounded-3xl p-5 shadow-2xs transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="space-y-1.5">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="font-bold text-slate-900 text-base sm:text-lg leading-snug">${escapeHtml(pro.nome)}</h3>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                        ${escapeHtml(pro.profissao)}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-slate-500">
+                      <span class="inline-flex items-center gap-1">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        ${escapeHtml(pro.cidade)}
+                      </span>
+                      <span class="inline-flex items-center gap-1 font-medium text-slate-600">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        ${escapeHtml(formattedPhone)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <a
+                      href="${waUrl}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition"
+                    >
+                      Chamar no WhatsApp
+                    </a>
+                    <button
+                      type="button"
+                      data-copy-phone="${escapeHtml(waDigits)}"
+                      class="px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer"
+                      title="Copiar número"
+                    >
+                      Copiar número
+                    </button>
+                  </div>
+                </article>
+              `;
+            })
+            .join('');
+        }
+
+        searchInput.addEventListener('input', () => {
+          buildSearchSuggestions(searchInput.value);
+          renderSearchResults();
+        });
+
+        searchSuggestions.addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-suggestion-val]');
+          if (!btn) return;
+          searchInput.value = btn.getAttribute('data-suggestion-val');
+          searchSuggestions.classList.add('hidden');
+          renderSearchResults();
+        });
+
+        btnClearSearch.addEventListener('click', () => {
+          searchInput.value = '';
+          searchSuggestions.classList.add('hidden');
+          renderSearchResults();
+          searchInput.focus();
+        });
+
+        resultsList.addEventListener('click', (e) => {
+          const copyBtn = e.target.closest('[data-copy-phone]');
+          if (!copyBtn) return;
+          const phone = copyBtn.getAttribute('data-copy-phone');
+          if (copyTextFallback(phone)) {
+            showToast(`Número ${formatPhone(phone)} copiado!`);
+          }
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+            searchSuggestions.classList.add('hidden');
+          }
+          if (!inputCidade.contains(e.target) && !citySuggestions.contains(e.target)) {
+            citySuggestions.classList.add('hidden');
+          }
+        });
+
+        // ---------------------------------------------------------
+        // 9. CADASTRO: PROFISSÕES, AUTOCOMPLETE DE CIDADES E VALIDAÇÃO
+        // ---------------------------------------------------------
+        function renderProfessionsSelect(selectedValue = '') {
+          const sorted = [...professions].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+          selectProfissao.innerHTML =
+            `<option value="">Selecione sua profissão...</option>` +
+            sorted
+              .map(
+                (p) =>
+                  `<option value="${escapeHtml(p)}" ${
+                    normalizeText(p) === normalizeText(selectedValue) ? 'selected' : ''
+                  }>${escapeHtml(p)}</option>`
+              )
+              .join('') +
+            `<option value="__NEW__">+ Cadastrar nova profissão...</option>`;
+        }
+
+        function openNewProfessionBox() {
+          newProfBox.classList.remove('hidden');
+          inputNewProf.value = '';
+          setTimeout(() => inputNewProf.focus(), 40);
+        }
+
+        function closeNewProfessionBox() {
+          newProfBox.classList.add('hidden');
+          if (selectProfissao.value === '__NEW__') {
+            selectProfissao.value = '';
+          }
+        }
+
+        selectProfissao.addEventListener('change', () => {
+          if (selectProfissao.value === '__NEW__') {
+            openNewProfessionBox();
+          } else {
+            newProfBox.classList.add('hidden');
+          }
+        });
+
+        btnToggleNewProf.addEventListener('click', openNewProfessionBox);
+        btnCancelNewProf.addEventListener('click', closeNewProfessionBox);
+
+        btnSaveNewProf.addEventListener('click', () => {
+          const raw = inputNewProf.value.trim();
+          if (!raw) {
+            inputNewProf.focus();
+            return;
+          }
+          const formatted = raw.charAt(0).toUpperCase() + raw.slice(1);
+          const existing = professions.find((p) => normalizeText(p) === normalizeText(formatted));
+          const finalName = existing || formatted;
+
+          if (!existing) {
+            professions.push(finalName);
+            safeSetStorage(KEYS.PROFESSIONS, professions);
+          }
+
+          renderProfessionsSelect(finalName);
+          newProfBox.classList.add('hidden');
+          document.getElementById('err-profissao').classList.add('hidden');
+          showToast(`Profissão "${finalName}" adicionada!`);
+        });
+
+        inputNewProf.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            btnSaveNewProf.click();
+          }
+        });
+
+        inputCidade.addEventListener('input', () => {
+          const norm = normalizeText(inputCidade.value);
+          if (norm.length < 2) {
+            citySuggestions.classList.add('hidden');
+            return;
+          }
+
+          const matches = citiesList
+            .filter((c) => normalizeText(c).includes(norm))
+            .slice(0, 8);
+
+          if (matches.length === 0) {
+            citySuggestions.classList.add('hidden');
+            return;
+          }
+
+          citySuggestions.innerHTML = matches
+            .map(
+              (city) => `
+              <li>
+                <button
+                  type="button"
+                  data-city-choice="${escapeHtml(city)}"
+                  class="w-full px-4 py-3 text-left text-sm font-medium text-slate-800 hover:bg-emerald-50 transition cursor-pointer"
+                >
+                  ${escapeHtml(city)}
+                </button>
+              </li>
+            `
+            )
+            .join('');
+          citySuggestions.classList.remove('hidden');
+        });
+
+        citySuggestions.addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-city-choice]');
+          if (!btn) return;
+          inputCidade.value = btn.getAttribute('data-city-choice');
+          citySuggestions.classList.add('hidden');
+          document.getElementById('err-cidade').classList.add('hidden');
+        });
+
+        inputWhatsapp.addEventListener('input', () => {
+          const digits = onlyDigits(inputWhatsapp.value).slice(0, 11);
+          if (inputWhatsapp.value !== digits) {
+            inputWhatsapp.value = digits;
+          }
+        });
+
+        function showFieldError(id, msg) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (msg) {
+            el.textContent = msg;
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        }
+
+        function resetCadastroFormState() {
+          formCadastro.reset();
+          newProfBox.classList.add('hidden');
+          citySuggestions.classList.add('hidden');
+          ['err-nome', 'err-profissao', 'err-cidade', 'err-whatsapp', 'err-autorizo'].forEach((id) =>
+            showFieldError(id, '')
+          );
+          registerFormCard.classList.remove('hidden');
+          registerSuccessCard.classList.add('hidden');
+        }
+
+        formCadastro.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const nome = inputNome.value.trim();
+          const profissao = selectProfissao.value === '__NEW__' ? '' : selectProfissao.value.trim();
+          const cidade = inputCidade.value.trim();
+          const whatsapp = onlyDigits(inputWhatsapp.value);
+          const autorizado = checkAutorizo.checked;
+
+          let valid = true;
+
+          if (nome.length < 2) {
+            showFieldError('err-nome', 'Informe seu nome.');
+            valid = false;
+          } else {
+            showFieldError('err-nome', '');
+          }
+
+          if (!profissao) {
+            showFieldError('err-profissao', 'Selecione ou adicione sua profissão.');
+            valid = false;
+          } else {
+            showFieldError('err-profissao', '');
+          }
+
+          if (cidade.length < 2) {
+            showFieldError('err-cidade', 'Informe sua cidade.');
+            valid = false;
+          } else {
+            showFieldError('err-cidade', '');
+          }
+
+          if (whatsapp.length < 10 || whatsapp.length > 11) {
+            showFieldError('err-whatsapp', 'Digite o WhatsApp com DDD usando 10 ou 11 números (ex.: 11999998888).');
+            valid = false;
+          } else {
+            showFieldError('err-whatsapp', '');
+          }
+
+          if (!autorizado) {
+            showFieldError('err-autorizo', 'Você precisa marcar a autorização para divulgar seu contato.');
+            valid = false;
+          } else {
+            showFieldError('err-autorizo', '');
+          }
+
+          if (!valid) return;
+
+          btnSubmitCadastro.disabled = true;
+          submitBtnText.textContent = 'Salvando na planilha...';
+
+          const newRecord = {
+            id: String(Date.now()),
+            nome,
+            profissao,
+            cidade,
+            whatsapp
+          };
+
+          professionals.unshift(newRecord);
+          safeSetStorage(KEYS.PROFESSIONALS, professionals);
+
+          const sheetResult = await saveToSheets(newRecord);
+
+          btnSubmitCadastro.disabled = false;
+          submitBtnText.textContent = 'Salvar Cadastro';
+
+          lastRegisteredQuery = profissao;
+          registerSyncNote.textContent = sheetResult.ok
+            ? 'Seu perfil foi enviado para a planilha do Google Sheets e já aparece nas buscas!'
+            : 'Seu perfil foi salvo localmente neste dispositivo.';
+
+          registerFormCard.classList.add('hidden');
+          registerSuccessCard.classList.remove('hidden');
+
+          if (sheetResult.ok) {
+            setTimeout(() => syncFromSheets(true), 1200);
+          }
+        });
+
+        btnSuccessSearch.addEventListener('click', () => {
+          showView('encontrar');
+          searchInput.value = lastRegisteredQuery;
+          searchSuggestions.classList.add('hidden');
+          renderSearchResults();
+        });
+
+        btnSuccessAnother.addEventListener('click', () => {
+          resetCadastroFormState();
+          inputNome.focus();
+        });
+
+        // ---------------------------------------------------------
+        // 10. CARREGAMENTO ASSÍNCRONO DE MUNICÍPIOS DO IBGE
+        // ---------------------------------------------------------
+        async function loadIbgeCities() {
+          try {
+            const cached = safeGetStorage(KEYS.CITIES_CACHE, []);
+            if (Array.isArray(cached) && cached.length > 1000) return;
+
+            const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!Array.isArray(data)) return;
+
+            const formatted = data
+              .map((m) => {
+                const uf = m && m.microrregiao && m.microrregiao.mesorregiao && m.microrregiao.mesorregiao.UF
+                  ? m.microrregiao.mesorregiao.UF.sigla
+                  : '';
+                return uf ? `${m.nome} - ${uf}` : m.nome;
+              })
+              .filter(Boolean);
+
+            if (formatted.length > 0) {
+              citiesList = Array.from(new Set([...INITIAL_CITIES, ...formatted]));
+              safeSetStorage(KEYS.CITIES_CACHE, formatted);
+            }
+          } catch (_) {}
+        }
+
+        // ---------------------------------------------------------
+        // 11. INICIALIZAÇÃO GERAL
+        // ---------------------------------------------------------
+        updateSheetsBadge();
+        renderProfessionsSelect();
+        showView('inicio');
+        syncFromSheets(true);
+        loadIbgeCities();
+      } catch (fatalErr) {
+        console.error('Erro ao inicializar ConectaPro:', fatalErr);
+      }
+    });
+  </script>
+</body>
+</html>
