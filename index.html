@@ -136,17 +136,28 @@
           Voltar ao início
         </button>
 
-        <button
-          type="button"
-          id="btn-refresh-sheets"
-          class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 py-1.5 px-3 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 shadow-2xs transition cursor-pointer"
-          title="Sincronizar dados da planilha agora"
-        >
-          <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span id="refresh-label">Atualizar lista</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="btn-track-request"
+            class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 py-1.5 px-3 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 shadow-2xs transition cursor-pointer"
+            title="Acompanhar pedido de alteração"
+          >
+            Acompanhar pedido
+          </button>
+
+          <button
+            type="button"
+            id="btn-refresh-sheets"
+            class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 py-1.5 px-3 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 shadow-2xs transition cursor-pointer"
+            title="Sincronizar dados da planilha agora"
+          >
+            <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span id="refresh-label">Atualizar lista</span>
+          </button>
+        </div>
       </div>
 
       <!-- Campo de busca unificado + Autocomplete -->
@@ -501,7 +512,8 @@ const HEADERS = ['ID', 'Nome', 'Profissao', 'Cidade', 'WhatsApp', 'DataCadastro'
 const REQUEST_HEADERS = [
   'PedidoID', 'DataSolicitacao', 'Status', 'ProfissionalID',
   'NomeAtualInformado', 'WhatsAppAtualInformado', 'CampoSolicitado',
-  'ValorSugerido', 'MensagemSolicitante', 'ContatoSolicitante', 'Canal'
+  'ValorSugerido', 'MensagemSolicitante', 'ContatoSolicitante', 'Canal',
+  'ObservacaoAdmin', 'DataAnalise', 'DataAplicacao'
 ];
 
 function getSheet() {
@@ -532,6 +544,47 @@ function sendResponse(obj, callback) {
 function doGet(e) {
   const cb = e &amp;&amp; e.parameter ? e.parameter.callback : null;
   try {
+    const action = e &amp;&amp; e.parameter ? String(e.parameter.action || '').trim() : '';
+
+    if (action === 'request_status') {
+      const pedidoId = e &amp;&amp; e.parameter ? String(e.parameter.pedidoId || '').trim() : '';
+      const contato = e &amp;&amp; e.parameter ? String(e.parameter.contato || '').replace(/\D/g, '') : '';
+      if (!pedidoId) {
+        return sendResponse({ status: 'error', ok: false, message: 'pedidoId obrigatório' }, cb);
+      }
+
+      const rows = getRequestsSheet().getDataRange().getValues();
+      for (let i = 1; i &lt; rows.length; i++) {
+        const r = rows[i];
+        const currentPedidoId = String(r[0] || '').trim();
+        if (currentPedidoId !== pedidoId) continue;
+
+        const contatoPlanilha = String(r[9] || '').replace(/\D/g, '');
+        if (contato &amp;&amp; contatoPlanilha &amp;&amp; contato !== contatoPlanilha) {
+          return sendResponse({ status: 'not_found', ok: false, message: 'Pedido não encontrado' }, cb);
+        }
+
+        return sendResponse({
+          status: 'ok',
+          ok: true,
+          request: {
+            pedidoId: currentPedidoId,
+            dataSolicitacao: String(r[1] || ''),
+            status: String(r[2] || 'novo'),
+            campoSolicitado: String(r[6] || ''),
+            valorSugerido: String(r[7] || ''),
+            mensagem: String(r[8] || ''),
+            observacaoAdmin: String(r[11] || ''),
+            dataAnalise: String(r[12] || ''),
+            dataAplicacao: String(r[13] || '')
+          },
+          supportedActions: ['create_professional', 'request_update', 'request_status']
+        }, cb);
+      }
+
+      return sendResponse({ status: 'not_found', ok: false, message: 'Pedido não encontrado' }, cb);
+    }
+
     const rows = getSheet().getDataRange().getValues();
     const items = [];
     for (let i = 1; i &lt; rows.length; i++) {
@@ -546,7 +599,7 @@ function doGet(e) {
         criadoEm: String(r[5] || '')
       });
     }
-    return sendResponse({ status: 'ok', ok: true, items: items.reverse(), supportedActions: ['create_professional', 'request_update'] }, cb);
+    return sendResponse({ status: 'ok', ok: true, items: items.reverse(), supportedActions: ['create_professional', 'request_update', 'request_status'] }, cb);
   } catch (err) {
     return sendResponse({ status: 'error', ok: false, message: err.message }, cb);
   }
@@ -572,7 +625,10 @@ function doPost(e) {
         String(data.valorSugerido || '').trim(),
         String(data.mensagem || '').trim(),
         String(data.contatoSolicitante || '').replace(/\D/g, ''),
-        'app'
+        'app',
+        '',
+        '',
+        ''
       ]);
       return ContentService.createTextOutput(JSON.stringify({ status: 'ok', ok: true, id: pedidoId, acceptedAction: action }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -704,6 +760,76 @@ function doPost(e) {
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div
+    id="track-request-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-xl p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900">Acompanhar pedido de alteração</h3>
+          <p class="text-xs text-slate-500 mt-1">Consulte o andamento usando o código do pedido.</p>
+        </div>
+        <button
+          type="button"
+          id="btn-close-track-request-modal"
+          class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+          title="Fechar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="track-request-form" class="mt-5 space-y-4" novalidate>
+        <div>
+          <label for="track-request-id" class="block text-sm font-semibold text-slate-700 mb-1.5">Código do pedido <span class="text-rose-500">*</span></label>
+          <input
+            type="text"
+            id="track-request-id"
+            placeholder="Ex.: 1764157380012"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm"
+          />
+          <p id="err-track-request-id" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+        </div>
+
+        <div>
+          <label for="track-request-contact" class="block text-sm font-semibold text-slate-700 mb-1.5">Contato usado no pedido (opcional)</label>
+          <input
+            type="tel"
+            id="track-request-contact"
+            inputmode="numeric"
+            maxlength="11"
+            placeholder="WhatsApp com DDD"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm"
+          />
+        </div>
+
+        <div class="pt-1 flex items-center gap-2">
+          <button
+            type="submit"
+            id="btn-check-track-request"
+            class="flex-1 py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition cursor-pointer"
+          >
+            Consultar status
+          </button>
+          <button
+            type="button"
+            id="btn-cancel-track-request"
+            class="py-3.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer"
+          >
+            Fechar
+          </button>
+        </div>
+      </form>
+
+      <div id="track-request-result" class="hidden mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"></div>
     </div>
   </div>
 
@@ -870,6 +996,7 @@ function doPost(e) {
         let lastRegisteredQuery = '';
         let lastUpdateRequestAt = 0;
         let supportsUpdateRequests = false;
+        let supportsRequestStatus = false;
 
         // Prioriza DEFAULT_APPS_SCRIPT_URL sempre que não houver customização manual explícita
         function getActiveSheetsUrl() {
@@ -910,6 +1037,7 @@ function doPost(e) {
         const resultsCount = document.getElementById('results-count');
         const resultsList = document.getElementById('results-list');
         const btnRefreshSheets = document.getElementById('btn-refresh-sheets');
+        const btnTrackRequest = document.getElementById('btn-track-request');
         const refreshIcon = document.getElementById('refresh-icon');
         const refreshLabel = document.getElementById('refresh-label');
 
@@ -963,6 +1091,17 @@ function doPost(e) {
         const errUpdateField = document.getElementById('err-update-field');
         const errUpdateValue = document.getElementById('err-update-value');
         const errUpdateMessage = document.getElementById('err-update-message');
+
+        // Modal acompanhar pedido
+        const trackRequestModal = document.getElementById('track-request-modal');
+        const btnCloseTrackRequestModal = document.getElementById('btn-close-track-request-modal');
+        const btnCancelTrackRequest = document.getElementById('btn-cancel-track-request');
+        const trackRequestForm = document.getElementById('track-request-form');
+        const trackRequestId = document.getElementById('track-request-id');
+        const trackRequestContact = document.getElementById('track-request-contact');
+        const btnCheckTrackRequest = document.getElementById('btn-check-track-request');
+        const errTrackRequestId = document.getElementById('err-track-request-id');
+        const trackRequestResult = document.getElementById('track-request-result');
 
         // ---------------------------------------------------------
         // 5. NAVEGAÇÃO ENTRE AS 3 TELAS
@@ -1051,13 +1190,11 @@ function doPost(e) {
           return arr.map(normalizeRecord).filter(Boolean);
         }
 
-        function payloadSupportsUpdateRequests(payload) {
-          return !!(
-            payload &&
-            typeof payload === 'object' &&
-            Array.isArray(payload.supportedActions) &&
-            payload.supportedActions.includes('request_update')
-          );
+        function extractSupportedActions(payload) {
+          if (!payload || typeof payload !== 'object' || !Array.isArray(payload.supportedActions)) {
+            return [];
+          }
+          return payload.supportedActions.map((action) => String(action || '').trim()).filter(Boolean);
         }
 
         function fetchViaJsonp(baseUrl, timeoutMs = 9500) {
@@ -1109,18 +1246,20 @@ function doPost(e) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const json = await res.json();
             const parsed = extractRecordsFromPayload(json);
+            const supportedActions = extractSupportedActions(json);
             if (parsed !== null) {
-              return { records: parsed, via: 'fetch', supportsUpdateRequests: payloadSupportsUpdateRequests(json) };
+              return { records: parsed, via: 'fetch', supportedActions };
             }
             throw new Error('Formato de resposta inválido');
           } catch (fetchErr) {
             const jsonpPayload = await fetchViaJsonp(url, 9500);
             const parsedJsonp = extractRecordsFromPayload(jsonpPayload);
+            const supportedActions = extractSupportedActions(jsonpPayload);
             if (parsedJsonp !== null) {
               return {
                 records: parsedJsonp,
                 via: 'jsonp',
-                supportsUpdateRequests: payloadSupportsUpdateRequests(jsonpPayload)
+                supportedActions
               };
             }
             throw fetchErr;
@@ -1136,8 +1275,9 @@ function doPost(e) {
           refreshLabel.textContent = 'Sincronizando...';
 
           try {
-            const { records, supportsUpdateRequests: supportsUpdate } = await readFromAppsScript(url);
-            supportsUpdateRequests = supportsUpdate;
+            const { records, supportedActions } = await readFromAppsScript(url);
+            supportsUpdateRequests = supportedActions.includes('request_update');
+            supportsRequestStatus = supportedActions.includes('request_status');
             if (records.length > 0) {
               professionals = records;
               safeSetStorage(KEYS.PROFESSIONALS, professionals);
@@ -1239,11 +1379,45 @@ function doPost(e) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
             if (data && data.ok && data.acceptedAction === 'request_update') {
-              return { ok: true, mode: 'cors' };
+              return { ok: true, mode: 'cors', requestId: String(data.id || '') };
             }
             return { ok: false, reason: 'unsupported_action' };
           } catch (_) {
             return { ok: false };
+          }
+        }
+
+        async function fetchUpdateRequestStatus(pedidoId, contatoSolicitante = '') {
+          const url = getActiveSheetsUrl();
+          if (!url) return { ok: false, reason: 'missing_url' };
+
+          const query = new URLSearchParams({
+            action: 'request_status',
+            pedidoId: String(pedidoId || '').trim(),
+            contato: onlyDigits(contatoSolicitante || ''),
+            t: String(Date.now())
+          });
+
+          const fullUrl = `${url}${url.includes('?') ? '&' : '?'}${query.toString()}`;
+
+          try {
+            const res = await fetch(fullUrl, { method: 'GET', redirect: 'follow' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const payload = await res.json();
+            if (payload && payload.ok && payload.request) {
+              return { ok: true, request: payload.request };
+            }
+            return { ok: false, reason: 'not_found' };
+          } catch (_) {
+            try {
+              const payload = await fetchViaJsonp(`${url}${url.includes('?') ? '&' : '?'}action=request_status&pedidoId=${encodeURIComponent(String(pedidoId || '').trim())}&contato=${encodeURIComponent(onlyDigits(contatoSolicitante || ''))}`);
+              if (payload && payload.ok && payload.request) {
+                return { ok: true, request: payload.request };
+              }
+              return { ok: false, reason: 'not_found' };
+            } catch (__){
+              return { ok: false, reason: 'network' };
+            }
           }
         }
 
@@ -1290,6 +1464,23 @@ function doPost(e) {
           resetUpdateRequestForm();
         }
 
+        function openTrackRequestModal(prefilledPedidoId = '') {
+          showInlineError(errTrackRequestId, '');
+          trackRequestResult.classList.add('hidden');
+          trackRequestResult.textContent = '';
+          trackRequestForm.reset();
+          if (prefilledPedidoId) trackRequestId.value = prefilledPedidoId;
+          trackRequestModal.classList.remove('hidden');
+          setTimeout(() => trackRequestId.focus(), 40);
+        }
+
+        function closeTrackRequestModal() {
+          trackRequestModal.classList.add('hidden');
+          showInlineError(errTrackRequestId, '');
+          trackRequestResult.classList.add('hidden');
+          trackRequestResult.textContent = '';
+        }
+
         function setSheetsFeedback(msg, type) {
           sheetsFeedback.textContent = msg;
           sheetsFeedback.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-rose-50', 'text-rose-700', 'bg-slate-100', 'text-slate-700');
@@ -1314,12 +1505,22 @@ function doPost(e) {
           if (e.key === 'Escape' && !updateRequestModal.classList.contains('hidden')) {
             closeUpdateRequestModal();
           }
+          if (e.key === 'Escape' && !trackRequestModal.classList.contains('hidden')) {
+            closeTrackRequestModal();
+          }
         });
 
         btnCloseUpdateRequestModal.addEventListener('click', closeUpdateRequestModal);
         btnCancelUpdateRequest.addEventListener('click', closeUpdateRequestModal);
         updateRequestModal.addEventListener('click', (e) => {
           if (e.target === updateRequestModal) closeUpdateRequestModal();
+        });
+
+        btnTrackRequest.addEventListener('click', () => openTrackRequestModal());
+        btnCloseTrackRequestModal.addEventListener('click', closeTrackRequestModal);
+        btnCancelTrackRequest.addEventListener('click', closeTrackRequestModal);
+        trackRequestModal.addEventListener('click', (e) => {
+          if (e.target === trackRequestModal) closeTrackRequestModal();
         });
 
         btnRestoreDefaultUrl.addEventListener('click', () => {
@@ -1338,10 +1539,11 @@ function doPost(e) {
           btnTestSheets.disabled = true;
           setSheetsFeedback('Testando conexão com a planilha...', 'info');
           try {
-            const { records, via, supportsUpdateRequests: supportsUpdate } = await readFromAppsScript(candidate);
-            supportsUpdateRequests = supportsUpdate;
+            const { records, via, supportedActions } = await readFromAppsScript(candidate);
+            supportsUpdateRequests = supportedActions.includes('request_update');
+            supportsRequestStatus = supportedActions.includes('request_status');
             setSheetsFeedback(
-              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.${supportsUpdate ? ' Pedidos de alteração: habilitado.' : ' Pedidos de alteração: atualize o Apps Script.'}`,
+              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.${supportsUpdateRequests ? ' Pedidos de alteração: habilitado.' : ' Pedidos de alteração: atualize o Apps Script.'}${supportsRequestStatus ? ' Consulta de pedido: habilitada.' : ' Consulta de pedido: atualize o Apps Script.'}`,
               'success'
             );
           } catch (_) {
@@ -1638,6 +1840,13 @@ function doPost(e) {
           }
         });
 
+        trackRequestContact.addEventListener('input', () => {
+          const digits = onlyDigits(trackRequestContact.value).slice(0, 11);
+          if (trackRequestContact.value !== digits) {
+            trackRequestContact.value = digits;
+          }
+        });
+
         updateRequestForm.addEventListener('submit', async (e) => {
           e.preventDefault();
 
@@ -1702,13 +1911,67 @@ function doPost(e) {
 
           if (result.ok) {
             lastUpdateRequestAt = Date.now();
+            const lastRequestId = result.requestId || '';
             closeUpdateRequestModal();
-            showToast('Pedido enviado! Vamos analisar e corrigir se aprovado.');
+            showToast(lastRequestId ? `Pedido enviado! Código: ${lastRequestId}` : 'Pedido enviado! Vamos analisar e corrigir se aprovado.');
+            if (lastRequestId) openTrackRequestModal(lastRequestId);
           } else if (result.reason === 'unsupported_action') {
             showToast('Atualize o Apps Script para habilitar pedidos de alteração.');
           } else {
             showToast('Não foi possível enviar agora. Tente novamente em instantes.');
           }
+        });
+
+        trackRequestForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          if (!supportsRequestStatus) {
+            showToast('Atualize o Apps Script antes de consultar pedidos.');
+            return;
+          }
+
+          const pedidoId = trackRequestId.value.trim();
+          const contato = onlyDigits(trackRequestContact.value);
+
+          if (!pedidoId) {
+            showInlineError(errTrackRequestId, 'Informe o código do pedido.');
+            return;
+          }
+          showInlineError(errTrackRequestId, '');
+
+          btnCheckTrackRequest.disabled = true;
+          btnCheckTrackRequest.textContent = 'Consultando...';
+
+          const result = await fetchUpdateRequestStatus(pedidoId, contato);
+
+          btnCheckTrackRequest.disabled = false;
+          btnCheckTrackRequest.textContent = 'Consultar status';
+
+          if (!result.ok) {
+            trackRequestResult.classList.remove('hidden');
+            trackRequestResult.innerHTML = '<p class="text-sm text-rose-700">Pedido não encontrado. Verifique o código informado.</p>';
+            return;
+          }
+
+          const req = result.request;
+          const statusLabel = String(req.status || 'novo').replace(/_/g, ' ');
+          const observacao = req.observacaoAdmin ? `<p><strong>Observação da análise:</strong> ${escapeHtml(req.observacaoAdmin)}</p>` : '';
+          const dataAnalise = req.dataAnalise ? `<p><strong>Data da análise:</strong> ${escapeHtml(req.dataAnalise)}</p>` : '';
+          const dataAplicacao = req.dataAplicacao ? `<p><strong>Data de aplicação:</strong> ${escapeHtml(req.dataAplicacao)}</p>` : '';
+
+          trackRequestResult.classList.remove('hidden');
+          trackRequestResult.innerHTML = `
+            <div class="space-y-1.5 text-xs sm:text-sm">
+              <p><strong>Pedido:</strong> ${escapeHtml(req.pedidoId || pedidoId)}</p>
+              <p><strong>Status:</strong> ${escapeHtml(statusLabel)}</p>
+              <p><strong>Solicitado em:</strong> ${escapeHtml(req.dataSolicitacao || '-')}</p>
+              <p><strong>Campo solicitado:</strong> ${escapeHtml(req.campoSolicitado || '-')}</p>
+              <p><strong>Valor sugerido:</strong> ${escapeHtml(req.valorSugerido || '-')}</p>
+              ${observacao}
+              ${dataAnalise}
+              ${dataAplicacao}
+            </div>
+          `;
         });
 
         document.addEventListener('click', (e) => {
