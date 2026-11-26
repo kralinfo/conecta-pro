@@ -62,10 +62,10 @@
         <button
           type="button"
           id="btn-open-sheets"
-          class="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold border transition shadow-2xs cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+          class="inline-flex items-center justify-center w-8 h-8 rounded-full border transition shadow-2xs cursor-pointer bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+          title="Status da conexão com a planilha"
         >
           <span id="sheets-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span id="sheets-status-label"></span>
         </button>
 
         <button
@@ -736,7 +736,6 @@ function doPost(e) {
 
         const btnOpenSheets = document.getElementById('btn-open-sheets');
         const sheetsStatusDot = document.getElementById('sheets-status-dot');
-        const sheetsStatusLabel = document.getElementById('sheets-status-label');
 
         // Busca
         const searchInput = document.getElementById('search-input');
@@ -829,15 +828,13 @@ function doPost(e) {
         function updateSheetsBadge() {
           const url = getActiveSheetsUrl();
           if (url) {
-            btnOpenSheets.className = 'inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold border transition shadow-2xs cursor-pointer bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100';
+            btnOpenSheets.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full border transition shadow-2xs cursor-pointer bg-emerald-50 border-emerald-200 hover:bg-emerald-100';
             sheetsStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
-            sheetsStatusLabel.textContent = 'Planilha Conectada';
             modalStatusSubtitle.textContent = 'Conectado ao Google Apps Script';
             modalStatusSubtitle.className = 'text-xs text-emerald-700 font-medium';
           } else {
-            btnOpenSheets.className = 'inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold border transition shadow-2xs cursor-pointer bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100';
+            btnOpenSheets.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full border transition shadow-2xs cursor-pointer bg-amber-50 border-amber-200 hover:bg-amber-100';
             sheetsStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
-            sheetsStatusLabel.textContent = 'Modo Local';
             modalStatusSubtitle.textContent = 'Nenhuma URL configurada';
             modalStatusSubtitle.className = 'text-xs text-amber-700 font-medium';
           }
