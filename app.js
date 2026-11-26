@@ -129,18 +129,28 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnCancelUpdateRequest = document.getElementById('btn-cancel-update-request');
         const updateRequestForm = document.getElementById('update-request-form');
         const updateRequestProfessionalId = document.getElementById('update-request-professional-id');
+        const updateRequestKind = document.getElementById('update-request-kind');
         const updateRequestProfessionalName = document.getElementById('update-request-professional-name');
         const updateRequestProfessionalPhone = document.getElementById('update-request-professional-phone');
+        const updateRequestRequesterName = document.getElementById('update-request-requester-name');
+        const updateRequestFieldGroup = document.getElementById('update-request-field-group');
+        const updateRequestValueGroup = document.getElementById('update-request-value-group');
         const updateRequestField = document.getElementById('update-request-field');
         const updateRequestValue = document.getElementById('update-request-value');
         const updateRequestMessage = document.getElementById('update-request-message');
         const updateRequestContact = document.getElementById('update-request-contact');
+        const updateRequestRemovalConsentGroup = document.getElementById('update-request-removal-consent-group');
+        const updateRequestRemovalConsent = document.getElementById('update-request-removal-consent');
         const btnSendUpdateRequest = document.getElementById('btn-send-update-request');
+        const errUpdateKind = document.getElementById('err-update-kind');
         const errUpdateName = document.getElementById('err-update-name');
         const errUpdatePhone = document.getElementById('err-update-phone');
+        const errUpdateRequesterName = document.getElementById('err-update-requester-name');
         const errUpdateField = document.getElementById('err-update-field');
         const errUpdateValue = document.getElementById('err-update-value');
         const errUpdateMessage = document.getElementById('err-update-message');
+        const errUpdateContact = document.getElementById('err-update-contact');
+        const errUpdateRemovalConsent = document.getElementById('err-update-removal-consent');
         // ---------------------------------------------------------
         // 5. NAVEGAÇÃO ENTRE AS 3 TELAS
         // ---------------------------------------------------------
@@ -388,8 +398,10 @@ document.addEventListener('DOMContentLoaded', function () {
             action: 'request_update',
             pedidoId: String(Date.now()),
             profissionalId: String(requestData.profissionalId || '').trim(),
+            tipoSolicitacao: String(requestData.tipoSolicitacao || 'alteracao').trim(),
             nomeAtual: String(requestData.nomeAtual || '').trim(),
             whatsappAtual: onlyDigits(requestData.whatsappAtual || ''),
+            nomeSolicitante: String(requestData.nomeSolicitante || '').trim(),
             campoSolicitado: String(requestData.campoSolicitado || '').trim(),
             valorSugerido: String(requestData.valorSugerido || '').trim(),
             mensagem: String(requestData.mensagem || '').trim(),
@@ -418,28 +430,65 @@ document.addEventListener('DOMContentLoaded', function () {
         function resetUpdateRequestForm() {
           updateRequestForm.reset();
           updateRequestProfessionalId.value = '';
+          updateRequestKind.value = 'alteracao';
           updateRequestProfessionalName.value = '';
           updateRequestProfessionalPhone.value = '';
+          updateRequestRequesterName.value = '';
+          updateRequestRemovalConsent.checked = false;
+          showInlineError(errUpdateKind, '');
           showInlineError(errUpdateName, '');
           showInlineError(errUpdatePhone, '');
+          showInlineError(errUpdateRequesterName, '');
           showInlineError(errUpdateField, '');
           showInlineError(errUpdateValue, '');
           showInlineError(errUpdateMessage, '');
+          showInlineError(errUpdateContact, '');
+          showInlineError(errUpdateRemovalConsent, '');
+          updateRequestFieldGroup.classList.remove('hidden');
+          updateRequestValueGroup.classList.remove('hidden');
+          updateRequestRemovalConsentGroup.classList.add('hidden');
+        }
+
+        function updateRequestKindUI() {
+          const isRemoval = updateRequestKind.value === 'remocao';
+          if (isRemoval) {
+            updateRequestFieldGroup.classList.add('hidden');
+            updateRequestValueGroup.classList.add('hidden');
+            updateRequestRemovalConsentGroup.classList.remove('hidden');
+            updateRequestField.value = '';
+            updateRequestValue.value = '';
+            showInlineError(errUpdateField, '');
+            showInlineError(errUpdateValue, '');
+          } else {
+            updateRequestFieldGroup.classList.remove('hidden');
+            updateRequestValueGroup.classList.remove('hidden');
+            updateRequestRemovalConsentGroup.classList.add('hidden');
+            updateRequestRemovalConsent.checked = false;
+            showInlineError(errUpdateRemovalConsent, '');
+          }
         }
 
         function openUpdateRequestModal(pro = {}) {
           updateRequestProfessionalId.value = String(pro.id || '').trim();
+          updateRequestKind.value = 'alteracao';
           updateRequestProfessionalName.value = pro.nome || '';
           updateRequestProfessionalPhone.value = onlyDigits(pro.whatsapp || '');
+          updateRequestRequesterName.value = '';
           updateRequestField.value = '';
           updateRequestValue.value = '';
           updateRequestMessage.value = '';
           updateRequestContact.value = '';
+          updateRequestRemovalConsent.checked = false;
+          showInlineError(errUpdateKind, '');
           showInlineError(errUpdateName, '');
           showInlineError(errUpdatePhone, '');
+          showInlineError(errUpdateRequesterName, '');
           showInlineError(errUpdateField, '');
           showInlineError(errUpdateValue, '');
           showInlineError(errUpdateMessage, '');
+          showInlineError(errUpdateContact, '');
+          showInlineError(errUpdateRemovalConsent, '');
+          updateRequestKindUI();
           updateRequestModal.classList.remove('hidden');
           setTimeout(() => updateRequestProfessionalName.focus(), 40);
         }
@@ -694,6 +743,8 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         });
 
+        updateRequestKind.addEventListener('change', updateRequestKindUI);
+
         updateRequestContact.addEventListener('input', () => {
           const digits = onlyDigits(updateRequestContact.value).slice(0, 11);
           if (updateRequestContact.value !== digits) {
@@ -704,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function () {
           e.preventDefault();
 
           if (!supportsUpdateRequests) {
-            showToast('No momento, não é possível enviar pedidos de alteração. Tente novamente mais tarde.');
+            showToast('No momento, não é possível enviar pedidos de alteração ou remoção. Tente novamente mais tarde.');
             return;
           }
 
@@ -715,14 +766,27 @@ document.addEventListener('DOMContentLoaded', function () {
           }
 
           const profissionalId = updateRequestProfessionalId.value.trim();
+          const tipoSolicitacao = updateRequestKind.value.trim();
           const nomeAtual = updateRequestProfessionalName.value.trim();
           const whatsappAtual = onlyDigits(updateRequestProfessionalPhone.value);
-          const campoSolicitado = updateRequestField.value.trim();
-          const valorSugerido = updateRequestValue.value.trim();
+          const nomeSolicitante = updateRequestRequesterName.value.trim();
+          const campoSolicitadoInput = updateRequestField.value.trim();
+          const valorSugeridoInput = updateRequestValue.value.trim();
           const mensagem = updateRequestMessage.value.trim();
           const contatoSolicitante = onlyDigits(updateRequestContact.value);
+          const removalConsentGiven = updateRequestRemovalConsent.checked;
+          const isRemoval = tipoSolicitacao === 'remocao';
+          const campoSolicitado = isRemoval ? 'remocao_cadastro' : campoSolicitadoInput;
+          const valorSugerido = isRemoval ? '' : valorSugeridoInput;
 
           let valid = true;
+          if (!tipoSolicitacao) {
+            showInlineError(errUpdateKind, 'Selecione o tipo de solicitação.');
+            valid = false;
+          } else {
+            showInlineError(errUpdateKind, '');
+          }
+
           if (nomeAtual.length < 2) {
             showInlineError(errUpdateName, 'Informe o nome atual do cadastro.');
             valid = false;
@@ -737,18 +801,37 @@ document.addEventListener('DOMContentLoaded', function () {
             showInlineError(errUpdatePhone, '');
           }
 
-          if (!campoSolicitado) {
-            showInlineError(errUpdateField, 'Selecione o campo que precisa alterar.');
+          if (nomeSolicitante.length < 2) {
+            showInlineError(errUpdateRequesterName, 'Informe seu nome para identificação.');
             valid = false;
           } else {
-            showInlineError(errUpdateField, '');
+            showInlineError(errUpdateRequesterName, '');
           }
 
-          if (valorSugerido.length < 2) {
-            showInlineError(errUpdateValue, 'Informe o novo valor sugerido.');
-            valid = false;
-          } else {
+          if (isRemoval) {
+            showInlineError(errUpdateField, '');
             showInlineError(errUpdateValue, '');
+            if (!removalConsentGiven) {
+              showInlineError(errUpdateRemovalConsent, 'Confirme a declaração para solicitar a remoção.');
+              valid = false;
+            } else {
+              showInlineError(errUpdateRemovalConsent, '');
+            }
+          } else {
+            showInlineError(errUpdateRemovalConsent, '');
+            if (!campoSolicitado) {
+              showInlineError(errUpdateField, 'Selecione o campo que precisa alterar.');
+              valid = false;
+            } else {
+              showInlineError(errUpdateField, '');
+            }
+
+            if (valorSugerido.length < 2) {
+              showInlineError(errUpdateValue, 'Informe o novo valor sugerido.');
+              valid = false;
+            } else {
+              showInlineError(errUpdateValue, '');
+            }
           }
 
           if (mensagem.length < 10) {
@@ -758,6 +841,13 @@ document.addEventListener('DOMContentLoaded', function () {
             showInlineError(errUpdateMessage, '');
           }
 
+          if (contatoSolicitante.length < 10 || contatoSolicitante.length > 11) {
+            showInlineError(errUpdateContact, 'Informe seu telefone com DDD (10 ou 11 dígitos).');
+            valid = false;
+          } else {
+            showInlineError(errUpdateContact, '');
+          }
+
           if (!valid) return;
 
           btnSendUpdateRequest.disabled = true;
@@ -765,8 +855,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
           const result = await saveUpdateRequestToSheets({
             profissionalId,
+            tipoSolicitacao,
             nomeAtual,
             whatsappAtual,
+            nomeSolicitante,
             campoSolicitado,
             valorSugerido,
             mensagem,
