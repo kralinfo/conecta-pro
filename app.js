@@ -100,8 +100,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const searchResultsWrapper = document.getElementById('search-results-wrapper');
         const resultsCount = document.getElementById('results-count');
         const resultsList = document.getElementById('results-list');
-        const btnSearchActions = document.getElementById('btn-search-actions');
-        const searchActionsMenu = document.getElementById('search-actions-menu');
         const btnOpenUpdateRequest = document.getElementById('btn-open-update-request');
 
         // Cadastro
@@ -417,16 +415,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
 
-        function openSearchActionsMenu() {
-          searchActionsMenu.classList.remove('hidden');
-          btnSearchActions.setAttribute('aria-expanded', 'true');
-        }
-
-        function closeSearchActionsMenu() {
-          searchActionsMenu.classList.add('hidden');
-          btnSearchActions.setAttribute('aria-expanded', 'false');
-        }
-
         function resetUpdateRequestForm() {
           updateRequestForm.reset();
           updateRequestProfessionalId.value = '';
@@ -465,21 +453,9 @@ document.addEventListener('DOMContentLoaded', function () {
           if (e.key === 'Escape' && !updateRequestModal.classList.contains('hidden')) {
             closeUpdateRequestModal();
           }
-          if (e.key === 'Escape' && !searchActionsMenu.classList.contains('hidden')) {
-            closeSearchActionsMenu();
-          }
-        });
-
-        btnSearchActions.addEventListener('click', () => {
-          if (searchActionsMenu.classList.contains('hidden')) {
-            openSearchActionsMenu();
-          } else {
-            closeSearchActionsMenu();
-          }
         });
 
         btnOpenUpdateRequest.addEventListener('click', () => {
-          closeSearchActionsMenu();
           openUpdateRequestModal();
         });
 
@@ -816,9 +792,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
           if (!inputCidade.contains(e.target) && !citySuggestions.contains(e.target)) {
             citySuggestions.classList.add('hidden');
-          }
-          if (!btnSearchActions.contains(e.target) && !searchActionsMenu.contains(e.target)) {
-            closeSearchActionsMenu();
           }
         });
 
