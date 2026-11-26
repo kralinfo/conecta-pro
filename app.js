@@ -329,12 +329,12 @@ document.addEventListener('DOMContentLoaded', function () {
               renderSearchResults();
             }
             if (!silent) {
-              showToast(`Lista atualizada (${records.length} registro${records.length === 1 ? '' : 's'})`);
+              showToast(`Lista atualizada com sucesso (${records.length} registro${records.length === 1 ? '' : 's'}).`);
             }
             return true;
           } catch (_) {
             if (!silent) {
-              showToast('Não foi possível sincronizar agora');
+              showToast('Não foi possível atualizar a lista agora. Tente novamente.');
             }
             return false;
           } finally {
@@ -728,13 +728,13 @@ document.addEventListener('DOMContentLoaded', function () {
           e.preventDefault();
 
           if (!supportsUpdateRequests) {
-            showToast('No momento não é possível enviar pedidos de alteração. Tente novamente mais tarde.');
+            showToast('No momento, não é possível enviar pedidos de alteração. Tente novamente mais tarde.');
             return;
           }
 
           const now = Date.now();
           if (now - lastUpdateRequestAt < 60000) {
-            showToast('Aguarde 1 minuto antes de enviar outro pedido.');
+            showToast('Aguarde 1 minuto antes de enviar um novo pedido.');
             return;
           }
 
@@ -803,11 +803,11 @@ document.addEventListener('DOMContentLoaded', function () {
           if (result.ok) {
             lastUpdateRequestAt = Date.now();
             closeUpdateRequestModal();
-            showToast('Pedido enviado com sucesso! Agora é só aguardar a análise.');
+            showToast('Pedido enviado com sucesso! Agora, aguarde a análise.');
           } else if (result.reason === 'unsupported_action') {
             showToast('No momento o envio de pedidos de alteração está indisponível.');
           } else {
-            showToast('Não foi possível enviar agora. Tente novamente em instantes.');
+            showToast('Não foi possível enviar o pedido agora. Tente novamente em instantes.');
           }
         });
         document.addEventListener('click', (e) => {
