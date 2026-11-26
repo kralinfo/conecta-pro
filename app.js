@@ -132,6 +132,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const updateRequestKind = document.getElementById('update-request-kind');
         const updateRequestProfessionalName = document.getElementById('update-request-professional-name');
         const updateRequestProfessionalPhone = document.getElementById('update-request-professional-phone');
+        const updateRequestContactSearch = document.getElementById('update-request-contact-search');
+        const updateRequestContactSuggestions = document.getElementById('update-request-contact-suggestions');
+        const updateRequestSelectedProfessional = document.getElementById('update-request-selected-professional');
+        const updateRequestSelectedName = document.getElementById('update-request-selected-name');
+        const updateRequestSelectedPhone = document.getElementById('update-request-selected-phone');
         const updateRequestRequesterName = document.getElementById('update-request-requester-name');
         const updateRequestFieldGroup = document.getElementById('update-request-field-group');
         const updateRequestValueGroup = document.getElementById('update-request-value-group');
@@ -143,8 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const updateRequestRemovalConsent = document.getElementById('update-request-removal-consent');
         const btnSendUpdateRequest = document.getElementById('btn-send-update-request');
         const errUpdateKind = document.getElementById('err-update-kind');
-        const errUpdateName = document.getElementById('err-update-name');
-        const errUpdatePhone = document.getElementById('err-update-phone');
+        const errUpdateProfessionalSelect = document.getElementById('err-update-professional-select');
         const errUpdateRequesterName = document.getElementById('err-update-requester-name');
         const errUpdateField = document.getElementById('err-update-field');
         const errUpdateValue = document.getElementById('err-update-value');
@@ -433,11 +437,15 @@ document.addEventListener('DOMContentLoaded', function () {
           updateRequestKind.value = 'alteracao';
           updateRequestProfessionalName.value = '';
           updateRequestProfessionalPhone.value = '';
+          updateRequestContactSearch.value = '';
+          updateRequestSelectedName.textContent = '-';
+          updateRequestSelectedPhone.textContent = '-';
+          updateRequestSelectedProfessional.classList.add('hidden');
+          updateRequestContactSuggestions.classList.add('hidden');
           updateRequestRequesterName.value = '';
           updateRequestRemovalConsent.checked = false;
           showInlineError(errUpdateKind, '');
-          showInlineError(errUpdateName, '');
-          showInlineError(errUpdatePhone, '');
+          showInlineError(errUpdateProfessionalSelect, '');
           showInlineError(errUpdateRequesterName, '');
           showInlineError(errUpdateField, '');
           showInlineError(errUpdateValue, '');
@@ -473,6 +481,15 @@ document.addEventListener('DOMContentLoaded', function () {
           updateRequestKind.value = 'alteracao';
           updateRequestProfessionalName.value = pro.nome || '';
           updateRequestProfessionalPhone.value = onlyDigits(pro.whatsapp || '');
+          updateRequestContactSearch.value = '';
+          updateRequestSelectedName.textContent = updateRequestProfessionalName.value || '-';
+          updateRequestSelectedPhone.textContent = formatPhone(updateRequestProfessionalPhone.value) || '-';
+          if (updateRequestProfessionalId.value) {
+            updateRequestSelectedProfessional.classList.remove('hidden');
+          } else {
+            updateRequestSelectedProfessional.classList.add('hidden');
+          }
+          updateRequestContactSuggestions.classList.add('hidden');
           updateRequestRequesterName.value = '';
           updateRequestField.value = '';
           updateRequestValue.value = '';
@@ -480,8 +497,7 @@ document.addEventListener('DOMContentLoaded', function () {
           updateRequestContact.value = '';
           updateRequestRemovalConsent.checked = false;
           showInlineError(errUpdateKind, '');
-          showInlineError(errUpdateName, '');
-          showInlineError(errUpdatePhone, '');
+          showInlineError(errUpdateProfessionalSelect, '');
           showInlineError(errUpdateRequesterName, '');
           showInlineError(errUpdateField, '');
           showInlineError(errUpdateValue, '');
@@ -490,7 +506,72 @@ document.addEventListener('DOMContentLoaded', function () {
           showInlineError(errUpdateRemovalConsent, '');
           updateRequestKindUI();
           updateRequestModal.classList.remove('hidden');
-          setTimeout(() => updateRequestProfessionalName.focus(), 40);
+          setTimeout(() => updateRequestContactSearch.focus(), 40);
+        }
+
+        function clearSelectedProfessional() {
+          updateRequestProfessionalId.value = '';
+          updateRequestProfessionalName.value = '';
+          updateRequestProfessionalPhone.value = '';
+          updateRequestSelectedName.textContent = '-';
+          updateRequestSelectedPhone.textContent = '-';
+          updateRequestSelectedProfessional.classList.add('hidden');
+        }
+
+        function selectProfessionalForUpdateRequest(professional) {
+          if (!professional) return;
+          updateRequestProfessionalId.value = String(professional.id || '').trim();
+          updateRequestProfessionalName.value = String(professional.nome || '').trim();
+          updateRequestProfessionalPhone.value = onlyDigits(professional.whatsapp || '');
+          updateRequestSelectedName.textContent = updateRequestProfessionalName.value || '-';
+          updateRequestSelectedPhone.textContent = formatPhone(updateRequestProfessionalPhone.value) || '-';
+          updateRequestSelectedProfessional.classList.remove('hidden');
+          updateRequestContactSearch.value = '';
+          updateRequestContactSuggestions.classList.add('hidden');
+          showInlineError(errUpdateProfessionalSelect, '');
+        }
+
+        function buildUpdateRequestContactSuggestions(query) {
+          const normalizedQuery = normalizeText(query || '');
+          if (!normalizedQuery || normalizedQuery.length < 2) {
+            updateRequestContactSuggestions.classList.add('hidden');
+            updateRequestContactSuggestions.innerHTML = '';
+            return;
+          }
+
+          const candidates = professionals
+            .filter((item) => {
+              const phoneDigits = onlyDigits(item.whatsapp || '');
+              const haystack = normalizeText(`${item.nome} ${item.profissao} ${item.cidade} ${phoneDigits}`);
+              return haystack.includes(normalizedQuery);
+            })
+            .slice(0, 8);
+
+          if (candidates.length === 0) {
+            updateRequestContactSuggestions.classList.add('hidden');
+            updateRequestContactSuggestions.innerHTML = '';
+            return;
+          }
+
+          updateRequestContactSuggestions.innerHTML = candidates
+            .map((item) => {
+              const label = `${item.nome || '-'} • ${item.profissao || '-'} • ${item.cidade || '-'}`;
+              const phone = formatPhone(item.whatsapp || '');
+              return `
+                <li>
+                  <button
+                    type="button"
+                    data-update-contact-id="${escapeHtml(String(item.id || ''))}"
+                    class="w-full px-4 py-3 text-left hover:bg-emerald-50 transition cursor-pointer"
+                  >
+                    <p class="text-sm font-medium text-slate-800">${escapeHtml(label)}</p>
+                    <p class="text-xs text-slate-500 mt-0.5">${escapeHtml(phone)}</p>
+                  </button>
+                </li>
+              `;
+            })
+            .join('');
+          updateRequestContactSuggestions.classList.remove('hidden');
         }
 
         function closeUpdateRequestModal() {
@@ -736,11 +817,18 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         });
 
-        updateRequestProfessionalPhone.addEventListener('input', () => {
-          const digits = onlyDigits(updateRequestProfessionalPhone.value).slice(0, 11);
-          if (updateRequestProfessionalPhone.value !== digits) {
-            updateRequestProfessionalPhone.value = digits;
-          }
+        updateRequestContactSearch.addEventListener('input', () => {
+          clearSelectedProfessional();
+          buildUpdateRequestContactSuggestions(updateRequestContactSearch.value);
+        });
+
+        updateRequestContactSuggestions.addEventListener('click', (e) => {
+          const button = e.target.closest('[data-update-contact-id]');
+          if (!button) return;
+          const selectedId = button.getAttribute('data-update-contact-id');
+          const professional = professionals.find((item) => String(item.id || '') === String(selectedId || ''));
+          if (!professional) return;
+          selectProfessionalForUpdateRequest(professional);
         });
 
         updateRequestKind.addEventListener('change', updateRequestKindUI);
@@ -787,18 +875,11 @@ document.addEventListener('DOMContentLoaded', function () {
             showInlineError(errUpdateKind, '');
           }
 
-          if (nomeAtual.length < 2) {
-            showInlineError(errUpdateName, 'Informe o nome atual do cadastro.');
+          if (!profissionalId || nomeAtual.length < 2 || whatsappAtual.length < 10) {
+            showInlineError(errUpdateProfessionalSelect, 'Pesquise e selecione um contato cadastrado.');
             valid = false;
           } else {
-            showInlineError(errUpdateName, '');
-          }
-
-          if (whatsappAtual.length < 10 || whatsappAtual.length > 11) {
-            showInlineError(errUpdatePhone, 'Informe o WhatsApp atual com DDD (10 ou 11 dígitos).');
-            valid = false;
-          } else {
-            showInlineError(errUpdatePhone, '');
+            showInlineError(errUpdateProfessionalSelect, '');
           }
 
           if (nomeSolicitante.length < 2) {
@@ -834,12 +915,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
 
-          if (mensagem.length < 10) {
-            showInlineError(errUpdateMessage, 'Escreva uma mensagem com pelo menos 10 caracteres.');
-            valid = false;
-          } else {
-            showInlineError(errUpdateMessage, '');
-          }
+          showInlineError(errUpdateMessage, '');
 
           if (contatoSolicitante.length < 10 || contatoSolicitante.length > 11) {
             showInlineError(errUpdateContact, 'Informe seu telefone com DDD (10 ou 11 dígitos).');
@@ -884,6 +960,9 @@ document.addEventListener('DOMContentLoaded', function () {
           }
           if (!inputCidade.contains(e.target) && !citySuggestions.contains(e.target)) {
             citySuggestions.classList.add('hidden');
+          }
+          if (!updateRequestContactSearch.contains(e.target) && !updateRequestContactSuggestions.contains(e.target)) {
+            updateRequestContactSuggestions.classList.add('hidden');
           }
         });
 

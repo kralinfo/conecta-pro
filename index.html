@@ -404,7 +404,7 @@
     role="dialog"
     aria-modal="true"
   >
-    <div class="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-xl p-5 sm:p-6">
+    <div class="w-full max-w-lg max-h-[88vh] overflow-y-auto bg-white rounded-3xl border border-slate-200 shadow-xl p-5 sm:p-6">
       <div class="flex items-center justify-between gap-3">
         <div>
           <h3 class="text-base sm:text-lg font-bold text-slate-900">Solicitar alteração de cadastro</h3>
@@ -424,6 +424,8 @@
 
       <form id="update-request-form" class="mt-5 space-y-4" novalidate>
         <input type="hidden" id="update-request-professional-id" />
+        <input type="hidden" id="update-request-professional-name" />
+        <input type="hidden" id="update-request-professional-phone" />
 
         <div>
           <label for="update-request-kind" class="block text-sm font-semibold text-slate-700 mb-1.5">Tipo de solicitação <span class="text-rose-500">*</span></label>
@@ -437,28 +439,25 @@
           <p id="err-update-kind" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
         </div>
 
-        <div>
-          <label for="update-request-professional-name" class="block text-sm font-semibold text-slate-700 mb-1.5">Nome atual no cadastro <span class="text-rose-500">*</span></label>
+        <div class="relative">
+          <label for="update-request-contact-search" class="block text-sm font-semibold text-slate-700 mb-1.5">Pesquisar contato cadastrado <span class="text-rose-500">*</span></label>
           <input
             type="text"
-            id="update-request-professional-name"
-            placeholder="Ex.: João da Silva"
+            id="update-request-contact-search"
+            autocomplete="off"
+            placeholder="Digite nome, profissão, cidade ou telefone..."
             class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm"
           />
-          <p id="err-update-name" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+          <ul
+            id="update-request-contact-suggestions"
+            class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-56 overflow-y-auto z-20 divide-y divide-slate-100"
+          ></ul>
+          <p id="err-update-professional-select" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
         </div>
 
-        <div>
-          <label for="update-request-professional-phone" class="block text-sm font-semibold text-slate-700 mb-1.5">WhatsApp atual no cadastro <span class="text-rose-500">*</span></label>
-          <input
-            type="tel"
-            id="update-request-professional-phone"
-            inputmode="numeric"
-            maxlength="11"
-            placeholder="Somente números com DDD"
-            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm"
-          />
-          <p id="err-update-phone" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+        <div id="update-request-selected-professional" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-xs sm:text-sm text-slate-700">
+          <p><strong>Selecionado:</strong> <span id="update-request-selected-name">-</span></p>
+          <p class="mt-1"><strong>Contato:</strong> <span id="update-request-selected-phone">-</span></p>
         </div>
 
         <div>
@@ -500,7 +499,7 @@
         </div>
 
         <div>
-          <label for="update-request-message" class="block text-sm font-semibold text-slate-700 mb-1.5">Mensagem / motivo <span class="text-rose-500">*</span></label>
+          <label for="update-request-message" class="block text-sm font-semibold text-slate-700 mb-1.5">Mensagem / motivo (opcional)</label>
           <textarea
             id="update-request-message"
             rows="4"
