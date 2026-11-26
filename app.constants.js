@@ -5,7 +5,6 @@ window.ConectaPro.config = {
   KEYS: {
     PROFESSIONALS: 'conectapro_professionals_v4',
     PROFESSIONS: 'conectapro_professions_v4',
-    SHEETS_URL_CUSTOM: 'conectapro_sheets_url_custom_v4',
     CITIES_CACHE: 'conectapro_cities_ibge_v4'
   },
   DEFAULT_PROFESSIONS: [

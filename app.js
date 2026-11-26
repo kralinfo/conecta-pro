@@ -72,14 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let supportsUpdateRequests = false;
         let registerFeature = null;
 
-        // Prioriza DEFAULT_APPS_SCRIPT_URL sempre que não houver customização manual explícita
         function getActiveSheetsUrl() {
-          try {
-            const custom = localStorage.getItem(KEYS.SHEETS_URL_CUSTOM);
-            if (custom && custom.trim().startsWith('https://script.google.com/')) {
-              return custom.trim();
-            }
-          } catch (_) {}
           return DEFAULT_APPS_SCRIPT_URL;
         }
 
@@ -95,9 +88,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnGoEncontrar = document.getElementById('btn-go-encontrar');
         const btnGoCadastrar = document.getElementById('btn-go-cadastrar');
         const backHomeButtons = document.querySelectorAll('[data-back-home]');
-
-        const btnOpenSheets = document.getElementById('btn-open-sheets');
-        const sheetsStatusDot = document.getElementById('sheets-status-dot');
 
         // Busca
         const searchInput = document.getElementById('search-input');
@@ -134,19 +124,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const submitBtnText = document.getElementById('submit-btn-text');
         const btnSuccessSearch = document.getElementById('btn-success-search');
         const btnSuccessAnother = document.getElementById('btn-success-another');
-
-        // Modal Sheets
-        const sheetsModal = document.getElementById('sheets-modal');
-        const btnCloseSheetsModal = document.getElementById('btn-close-sheets-modal');
-        const modalStatusSubtitle = document.getElementById('modal-status-subtitle');
-        const inputSheetsUrl = document.getElementById('input-sheets-url');
-        const btnRestoreDefaultUrl = document.getElementById('btn-restore-default-url');
-        const sheetsFeedback = document.getElementById('sheets-feedback');
-        const btnTestSheets = document.getElementById('btn-test-sheets');
-        const btnSaveSheets = document.getElementById('btn-save-sheets');
-        const btnCopyAppsScript = document.getElementById('btn-copy-apps-script');
-        const copyScriptLabel = document.getElementById('copy-script-label');
-        const appsScriptCode = document.getElementById('apps-script-code');
 
         // Modal pedido de alteração
         const updateRequestModal = document.getElementById('update-request-modal');
@@ -209,21 +186,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // ---------------------------------------------------------
         // 6. INTEGRAÇÃO HÍBRIDA GOOGLE SHEETS (FETCH + JSONP / NO-CORS)
         // ---------------------------------------------------------
-        function updateSheetsBadge() {
-          const url = getActiveSheetsUrl();
-          if (url) {
-            btnOpenSheets.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full border transition shadow-2xs cursor-pointer bg-emerald-50 border-emerald-200 hover:bg-emerald-100';
-            sheetsStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
-            modalStatusSubtitle.textContent = 'Conectado ao Google Apps Script';
-            modalStatusSubtitle.className = 'text-xs text-emerald-700 font-medium';
-          } else {
-            btnOpenSheets.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full border transition shadow-2xs cursor-pointer bg-amber-50 border-amber-200 hover:bg-amber-100';
-            sheetsStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
-            modalStatusSubtitle.textContent = 'Nenhuma URL configurada';
-            modalStatusSubtitle.className = 'text-xs text-amber-700 font-medium';
-          }
-        }
-
         function normalizeRecord(raw, index) {
           if (!raw || typeof raw !== 'object') return null;
           const nome = String(raw.nome || raw.Nome || '').trim();
@@ -455,19 +417,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
 
-        // ---------------------------------------------------------
-        // 7. MODAL DE CONFIGURAÇÃO DO GOOGLE SHEETS
-        // ---------------------------------------------------------
-        function openSheetsModal() {
-          inputSheetsUrl.value = getActiveSheetsUrl();
-          sheetsFeedback.classList.add('hidden');
-          sheetsModal.classList.remove('hidden');
-        }
-
-        function closeSheetsModal() {
-          sheetsModal.classList.add('hidden');
-        }
-
         function openSearchActionsMenu() {
           searchActionsMenu.classList.remove('hidden');
           btnSearchActions.setAttribute('aria-expanded', 'true');
@@ -511,27 +460,8 @@ document.addEventListener('DOMContentLoaded', function () {
           updateRequestModal.classList.add('hidden');
           resetUpdateRequestForm();
         }
-        function setSheetsFeedback(msg, type) {
-          sheetsFeedback.textContent = msg;
-          sheetsFeedback.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-rose-50', 'text-rose-700', 'bg-slate-100', 'text-slate-700');
-          if (type === 'success') {
-            sheetsFeedback.classList.add('bg-emerald-50', 'text-emerald-800');
-          } else if (type === 'error') {
-            sheetsFeedback.classList.add('bg-rose-50', 'text-rose-700');
-          } else {
-            sheetsFeedback.classList.add('bg-slate-100', 'text-slate-700');
-          }
-        }
 
-        btnOpenSheets.addEventListener('click', openSheetsModal);
-        btnCloseSheetsModal.addEventListener('click', closeSheetsModal);
-        sheetsModal.addEventListener('click', (e) => {
-          if (e.target === sheetsModal) closeSheetsModal();
-        });
         document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !sheetsModal.classList.contains('hidden')) {
-            closeSheetsModal();
-          }
           if (e.key === 'Escape' && !updateRequestModal.classList.contains('hidden')) {
             closeUpdateRequestModal();
           }
@@ -557,69 +487,6 @@ document.addEventListener('DOMContentLoaded', function () {
         btnCancelUpdateRequest.addEventListener('click', closeUpdateRequestModal);
         updateRequestModal.addEventListener('click', (e) => {
           if (e.target === updateRequestModal) closeUpdateRequestModal();
-        });
-        btnRestoreDefaultUrl.addEventListener('click', () => {
-          try { localStorage.removeItem(KEYS.SHEETS_URL_CUSTOM); } catch (_) {}
-          inputSheetsUrl.value = DEFAULT_APPS_SCRIPT_URL;
-          updateSheetsBadge();
-          setSheetsFeedback('URL padrão restaurada com sucesso!', 'success');
-        });
-
-        btnTestSheets.addEventListener('click', async () => {
-          const candidate = inputSheetsUrl.value.trim();
-          if (!candidate.startsWith('https://script.google.com/')) {
-            setSheetsFeedback('Cole uma URL válida começando com https://script.google.com/...', 'error');
-            return;
-          }
-          btnTestSheets.disabled = true;
-          setSheetsFeedback('Testando conexão com a planilha...', 'info');
-          try {
-            const { records, via, supportedActions } = await readFromAppsScript(candidate);
-            supportsUpdateRequests = supportedActions.includes('request_update');
-            setSheetsFeedback(
-              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.${supportsUpdateRequests ? ' Pedidos de alteração: habilitado.' : ' Pedidos de alteração: atualize o Apps Script.'}`,
-              'success'
-            );
-          } catch (_) {
-            setSheetsFeedback(
-              'Falha ao ler dados. Verifique se publicou como App da Web com acesso para "Qualquer pessoa".',
-              'error'
-            );
-          } finally {
-            btnTestSheets.disabled = false;
-          }
-        });
-
-        btnSaveSheets.addEventListener('click', async () => {
-          const candidate = inputSheetsUrl.value.trim();
-          if (!candidate.startsWith('https://script.google.com/')) {
-            setSheetsFeedback('Informe uma URL válida do Google Apps Script (/exec).', 'error');
-            return;
-          }
-          try {
-            if (candidate === DEFAULT_APPS_SCRIPT_URL) {
-              localStorage.removeItem(KEYS.SHEETS_URL_CUSTOM);
-            } else {
-              localStorage.setItem(KEYS.SHEETS_URL_CUSTOM, candidate);
-            }
-          } catch (_) {}
-          updateSheetsBadge();
-          setSheetsFeedback('Salvando e sincronizando dados...', 'info');
-          const ok = await syncFromSheets(true);
-          if (ok) {
-            setSheetsFeedback(`Conectado com sucesso! (${professionals.length} profissional(is) sincronizado(s)).`, 'success');
-            setTimeout(closeSheetsModal, 850);
-          } else {
-            setSheetsFeedback('URL salva, mas não foi possível ler a planilha agora.', 'error');
-          }
-        });
-
-        btnCopyAppsScript.addEventListener('click', () => {
-          const code = appsScriptCode.textContent;
-          if (copyTextFallback(code)) {
-            copyScriptLabel.textContent = 'Código copiado!';
-            setTimeout(() => { copyScriptLabel.textContent = 'Copiar código do Apps Script'; }, 2200);
-          }
         });
 
         // ---------------------------------------------------------
@@ -1041,7 +908,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // ---------------------------------------------------------
         // 11. INICIALIZAÇÃO GERAL
         // ---------------------------------------------------------
-        updateSheetsBadge();
         if (registerFeature && typeof registerFeature.renderProfessionsSelect === 'function') {
           registerFeature.renderProfessionsSelect();
         }
