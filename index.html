@@ -191,6 +191,11 @@
         Pesquise por cidade, profissão ou nome do profissional
       </p>
 
+      <p
+        id="city-total-hint"
+        class="hidden mt-1 px-1 text-xs sm:text-sm italic text-slate-400"
+      ></p>
+
       <!-- Container de resultados (vazio inicialmente) -->
       <div id="search-results-wrapper" class="hidden mt-6 flex-col gap-3">
         <div class="flex items-center justify-between px-1">
@@ -737,6 +742,7 @@ function doPost(e) {
         const searchInput = document.getElementById('search-input');
         const btnClearSearch = document.getElementById('btn-clear-search');
         const searchHint = document.getElementById('search-hint');
+        const cityTotalHint = document.getElementById('city-total-hint');
         const searchSuggestions = document.getElementById('search-suggestions');
         const searchResultsWrapper = document.getElementById('search-results-wrapper');
         const resultsCount = document.getElementById('results-count');
@@ -1189,6 +1195,16 @@ function doPost(e) {
         function renderSearchResults() {
           const rawQuery = searchInput.value.trim();
           updateHintAndClearVisibility();
+
+          const cityMatch = citiesList.find((city) => normalizeText(city) === normalizeText(rawQuery));
+          if (cityMatch) {
+            const totalByCity = professionals.filter((item) => normalizeText(item.cidade) === normalizeText(cityMatch)).length;
+            cityTotalHint.textContent = `${totalByCity} profissional${totalByCity === 1 ? '' : 'is'} em ${cityMatch}`;
+            cityTotalHint.classList.remove('hidden');
+          } else {
+            cityTotalHint.textContent = '';
+            cityTotalHint.classList.add('hidden');
+          }
 
           if (!rawQuery) {
             searchResultsWrapper.classList.add('hidden');
