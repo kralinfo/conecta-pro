@@ -70,7 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
         let isSyncing = false;
         let lastUpdateRequestAt = 0;
         let supportsUpdateRequests = false;
-        let supportsRequestStatus = false;
         let registerFeature = null;
 
         // Prioriza DEFAULT_APPS_SCRIPT_URL sempre que não houver customização manual explícita
@@ -112,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const resultsCount = document.getElementById('results-count');
         const resultsList = document.getElementById('results-list');
         const btnRefreshSheets = document.getElementById('btn-refresh-sheets');
-        const btnTrackRequest = document.getElementById('btn-track-request');
         const refreshIcon = document.getElementById('refresh-icon');
         const refreshLabel = document.getElementById('refresh-label');
 
@@ -166,18 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const errUpdateField = document.getElementById('err-update-field');
         const errUpdateValue = document.getElementById('err-update-value');
         const errUpdateMessage = document.getElementById('err-update-message');
-
-        // Modal acompanhar pedido
-        const trackRequestModal = document.getElementById('track-request-modal');
-        const btnCloseTrackRequestModal = document.getElementById('btn-close-track-request-modal');
-        const btnCancelTrackRequest = document.getElementById('btn-cancel-track-request');
-        const trackRequestForm = document.getElementById('track-request-form');
-        const trackRequestId = document.getElementById('track-request-id');
-        const trackRequestContact = document.getElementById('track-request-contact');
-        const btnCheckTrackRequest = document.getElementById('btn-check-track-request');
-        const errTrackRequestId = document.getElementById('err-track-request-id');
-        const trackRequestResult = document.getElementById('track-request-result');
-
         // ---------------------------------------------------------
         // 5. NAVEGAÇÃO ENTRE AS 3 TELAS
         // ---------------------------------------------------------
@@ -354,7 +340,6 @@ document.addEventListener('DOMContentLoaded', function () {
           try {
             const { records, supportedActions } = await readFromAppsScript(url);
             supportsUpdateRequests = supportedActions.includes('request_update');
-            supportsRequestStatus = supportedActions.includes('request_status');
             if (records.length > 0) {
               professionals = records;
               safeSetStorage(KEYS.PROFESSIONALS, professionals);
@@ -466,40 +451,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
 
-        async function fetchUpdateRequestStatus(pedidoId, contatoSolicitante = '') {
-          const url = getActiveSheetsUrl();
-          if (!url) return { ok: false, reason: 'missing_url' };
-
-          const query = new URLSearchParams({
-            action: 'request_status',
-            pedidoId: String(pedidoId || '').trim(),
-            contato: onlyDigits(contatoSolicitante || ''),
-            t: String(Date.now())
-          });
-
-          const fullUrl = `${url}${url.includes('?') ? '&' : '?'}${query.toString()}`;
-
-          try {
-            const res = await fetch(fullUrl, { method: 'GET', redirect: 'follow' });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const payload = await res.json();
-            if (payload && payload.ok && payload.request) {
-              return { ok: true, request: payload.request };
-            }
-            return { ok: false, reason: 'not_found' };
-          } catch (_) {
-            try {
-              const payload = await fetchViaJsonp(`${url}${url.includes('?') ? '&' : '?'}action=request_status&pedidoId=${encodeURIComponent(String(pedidoId || '').trim())}&contato=${encodeURIComponent(onlyDigits(contatoSolicitante || ''))}`);
-              if (payload && payload.ok && payload.request) {
-                return { ok: true, request: payload.request };
-              }
-              return { ok: false, reason: 'not_found' };
-            } catch (__){
-              return { ok: false, reason: 'network' };
-            }
-          }
-        }
-
         // ---------------------------------------------------------
         // 7. MODAL DE CONFIGURAÇÃO DO GOOGLE SHEETS
         // ---------------------------------------------------------
@@ -542,24 +493,6 @@ document.addEventListener('DOMContentLoaded', function () {
           updateRequestModal.classList.add('hidden');
           resetUpdateRequestForm();
         }
-
-        function openTrackRequestModal(prefilledPedidoId = '') {
-          showInlineError(errTrackRequestId, '');
-          trackRequestResult.classList.add('hidden');
-          trackRequestResult.textContent = '';
-          trackRequestForm.reset();
-          if (prefilledPedidoId) trackRequestId.value = prefilledPedidoId;
-          trackRequestModal.classList.remove('hidden');
-          setTimeout(() => trackRequestId.focus(), 40);
-        }
-
-        function closeTrackRequestModal() {
-          trackRequestModal.classList.add('hidden');
-          showInlineError(errTrackRequestId, '');
-          trackRequestResult.classList.add('hidden');
-          trackRequestResult.textContent = '';
-        }
-
         function setSheetsFeedback(msg, type) {
           sheetsFeedback.textContent = msg;
           sheetsFeedback.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-rose-50', 'text-rose-700', 'bg-slate-100', 'text-slate-700');
@@ -584,9 +517,6 @@ document.addEventListener('DOMContentLoaded', function () {
           if (e.key === 'Escape' && !updateRequestModal.classList.contains('hidden')) {
             closeUpdateRequestModal();
           }
-          if (e.key === 'Escape' && !trackRequestModal.classList.contains('hidden')) {
-            closeTrackRequestModal();
-          }
         });
 
         btnCloseUpdateRequestModal.addEventListener('click', closeUpdateRequestModal);
@@ -594,14 +524,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateRequestModal.addEventListener('click', (e) => {
           if (e.target === updateRequestModal) closeUpdateRequestModal();
         });
-
-        btnTrackRequest.addEventListener('click', () => openTrackRequestModal());
-        btnCloseTrackRequestModal.addEventListener('click', closeTrackRequestModal);
-        btnCancelTrackRequest.addEventListener('click', closeTrackRequestModal);
-        trackRequestModal.addEventListener('click', (e) => {
-          if (e.target === trackRequestModal) closeTrackRequestModal();
-        });
-
         btnRestoreDefaultUrl.addEventListener('click', () => {
           try { localStorage.removeItem(KEYS.SHEETS_URL_CUSTOM); } catch (_) {}
           inputSheetsUrl.value = DEFAULT_APPS_SCRIPT_URL;
@@ -620,9 +542,8 @@ document.addEventListener('DOMContentLoaded', function () {
           try {
             const { records, via, supportedActions } = await readFromAppsScript(candidate);
             supportsUpdateRequests = supportedActions.includes('request_update');
-            supportsRequestStatus = supportedActions.includes('request_status');
             setSheetsFeedback(
-              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.${supportsUpdateRequests ? ' Pedidos de alteração: habilitado.' : ' Pedidos de alteração: atualize o Apps Script.'}${supportsRequestStatus ? ' Consulta de pedido: habilitada.' : ' Consulta de pedido: atualize o Apps Script.'}`,
+              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.${supportsUpdateRequests ? ' Pedidos de alteração: habilitado.' : ' Pedidos de alteração: atualize o Apps Script.'}`,
               'success'
             );
           } catch (_) {
@@ -918,14 +839,6 @@ document.addEventListener('DOMContentLoaded', function () {
             updateRequestContact.value = digits;
           }
         });
-
-        trackRequestContact.addEventListener('input', () => {
-          const digits = onlyDigits(trackRequestContact.value).slice(0, 11);
-          if (trackRequestContact.value !== digits) {
-            trackRequestContact.value = digits;
-          }
-        });
-
         updateRequestForm.addEventListener('submit', async (e) => {
           e.preventDefault();
 
@@ -990,69 +903,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
           if (result.ok) {
             lastUpdateRequestAt = Date.now();
-            const lastRequestId = result.requestId || '';
             closeUpdateRequestModal();
-            showToast(lastRequestId ? `Pedido enviado! Código: ${lastRequestId}` : 'Pedido enviado! Vamos analisar e corrigir se aprovado.');
-            if (lastRequestId) openTrackRequestModal(lastRequestId);
+            showToast('Pedido enviado com sucesso! Agora é só aguardar a análise.');
           } else if (result.reason === 'unsupported_action') {
             showToast('Atualize o Apps Script para habilitar pedidos de alteração.');
           } else {
             showToast('Não foi possível enviar agora. Tente novamente em instantes.');
           }
         });
-
-        trackRequestForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-
-          if (!supportsRequestStatus) {
-            showToast('Atualize o Apps Script antes de consultar pedidos.');
-            return;
-          }
-
-          const pedidoId = trackRequestId.value.trim();
-          const contato = onlyDigits(trackRequestContact.value);
-
-          if (!pedidoId) {
-            showInlineError(errTrackRequestId, 'Informe o código do pedido.');
-            return;
-          }
-          showInlineError(errTrackRequestId, '');
-
-          btnCheckTrackRequest.disabled = true;
-          btnCheckTrackRequest.textContent = 'Consultando...';
-
-          const result = await fetchUpdateRequestStatus(pedidoId, contato);
-
-          btnCheckTrackRequest.disabled = false;
-          btnCheckTrackRequest.textContent = 'Consultar status';
-
-          if (!result.ok) {
-            trackRequestResult.classList.remove('hidden');
-            trackRequestResult.innerHTML = '<p class="text-sm text-rose-700">Pedido não encontrado. Verifique o código informado.</p>';
-            return;
-          }
-
-          const req = result.request;
-          const statusLabel = String(req.status || 'novo').replace(/_/g, ' ');
-          const observacao = req.observacaoAdmin ? `<p><strong>Observação da análise:</strong> ${escapeHtml(req.observacaoAdmin)}</p>` : '';
-          const dataAnalise = req.dataAnalise ? `<p><strong>Data da análise:</strong> ${escapeHtml(req.dataAnalise)}</p>` : '';
-          const dataAplicacao = req.dataAplicacao ? `<p><strong>Data de aplicação:</strong> ${escapeHtml(req.dataAplicacao)}</p>` : '';
-
-          trackRequestResult.classList.remove('hidden');
-          trackRequestResult.innerHTML = `
-            <div class="space-y-1.5 text-xs sm:text-sm">
-              <p><strong>Pedido:</strong> ${escapeHtml(req.pedidoId || pedidoId)}</p>
-              <p><strong>Status:</strong> ${escapeHtml(statusLabel)}</p>
-              <p><strong>Solicitado em:</strong> ${escapeHtml(req.dataSolicitacao || '-')}</p>
-              <p><strong>Campo solicitado:</strong> ${escapeHtml(req.campoSolicitado || '-')}</p>
-              <p><strong>Valor sugerido:</strong> ${escapeHtml(req.valorSugerido || '-')}</p>
-              ${observacao}
-              ${dataAnalise}
-              ${dataAplicacao}
-            </div>
-          `;
-        });
-
         document.addEventListener('click', (e) => {
           if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
             searchSuggestions.classList.add('hidden');
