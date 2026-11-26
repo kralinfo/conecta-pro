@@ -728,7 +728,7 @@ document.addEventListener('DOMContentLoaded', function () {
           e.preventDefault();
 
           if (!supportsUpdateRequests) {
-            showToast('Atualize o Apps Script antes de enviar pedidos de alteração.');
+            showToast('No momento não é possível enviar pedidos de alteração. Tente novamente mais tarde.');
             return;
           }
 
@@ -805,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function () {
             closeUpdateRequestModal();
             showToast('Pedido enviado com sucesso! Agora é só aguardar a análise.');
           } else if (result.reason === 'unsupported_action') {
-            showToast('Atualize o Apps Script para habilitar pedidos de alteração.');
+            showToast('No momento o envio de pedidos de alteração está indisponível.');
           } else {
             showToast('Não foi possível enviar agora. Tente novamente em instantes.');
           }
