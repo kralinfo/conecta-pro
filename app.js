@@ -113,6 +113,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnRefreshSheets = document.getElementById('btn-refresh-sheets');
         const refreshIcon = document.getElementById('refresh-icon');
         const refreshLabel = document.getElementById('refresh-label');
+        const btnSearchActions = document.getElementById('btn-search-actions');
+        const searchActionsMenu = document.getElementById('search-actions-menu');
+        const btnOpenUpdateRequest = document.getElementById('btn-open-update-request');
 
         // Cadastro
         const registerFormCard = document.getElementById('register-form-card');
@@ -161,6 +164,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const updateRequestMessage = document.getElementById('update-request-message');
         const updateRequestContact = document.getElementById('update-request-contact');
         const btnSendUpdateRequest = document.getElementById('btn-send-update-request');
+        const errUpdateName = document.getElementById('err-update-name');
+        const errUpdatePhone = document.getElementById('err-update-phone');
         const errUpdateField = document.getElementById('err-update-field');
         const errUpdateValue = document.getElementById('err-update-value');
         const errUpdateMessage = document.getElementById('err-update-message');
@@ -464,29 +469,43 @@ document.addEventListener('DOMContentLoaded', function () {
           sheetsModal.classList.add('hidden');
         }
 
+        function openSearchActionsMenu() {
+          searchActionsMenu.classList.remove('hidden');
+          btnSearchActions.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeSearchActionsMenu() {
+          searchActionsMenu.classList.add('hidden');
+          btnSearchActions.setAttribute('aria-expanded', 'false');
+        }
+
         function resetUpdateRequestForm() {
           updateRequestForm.reset();
           updateRequestProfessionalId.value = '';
-          updateRequestProfessionalName.textContent = '-';
-          updateRequestProfessionalPhone.textContent = '-';
+          updateRequestProfessionalName.value = '';
+          updateRequestProfessionalPhone.value = '';
+          showInlineError(errUpdateName, '');
+          showInlineError(errUpdatePhone, '');
           showInlineError(errUpdateField, '');
           showInlineError(errUpdateValue, '');
           showInlineError(errUpdateMessage, '');
         }
 
-        function openUpdateRequestModal(pro) {
+        function openUpdateRequestModal(pro = {}) {
           updateRequestProfessionalId.value = String(pro.id || '').trim();
-          updateRequestProfessionalName.textContent = pro.nome || '-';
-          updateRequestProfessionalPhone.textContent = formatPhone(pro.whatsapp || '');
+          updateRequestProfessionalName.value = pro.nome || '';
+          updateRequestProfessionalPhone.value = onlyDigits(pro.whatsapp || '');
           updateRequestField.value = '';
           updateRequestValue.value = '';
           updateRequestMessage.value = '';
           updateRequestContact.value = '';
+          showInlineError(errUpdateName, '');
+          showInlineError(errUpdatePhone, '');
           showInlineError(errUpdateField, '');
           showInlineError(errUpdateValue, '');
           showInlineError(errUpdateMessage, '');
           updateRequestModal.classList.remove('hidden');
-          setTimeout(() => updateRequestField.focus(), 40);
+          setTimeout(() => updateRequestProfessionalName.focus(), 40);
         }
 
         function closeUpdateRequestModal() {
@@ -517,6 +536,22 @@ document.addEventListener('DOMContentLoaded', function () {
           if (e.key === 'Escape' && !updateRequestModal.classList.contains('hidden')) {
             closeUpdateRequestModal();
           }
+          if (e.key === 'Escape' && !searchActionsMenu.classList.contains('hidden')) {
+            closeSearchActionsMenu();
+          }
+        });
+
+        btnSearchActions.addEventListener('click', () => {
+          if (searchActionsMenu.classList.contains('hidden')) {
+            openSearchActionsMenu();
+          } else {
+            closeSearchActionsMenu();
+          }
+        });
+
+        btnOpenUpdateRequest.addEventListener('click', () => {
+          closeSearchActionsMenu();
+          openUpdateRequestModal();
         });
 
         btnCloseUpdateRequestModal.addEventListener('click', closeUpdateRequestModal);
@@ -772,17 +807,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     >
                       Copiar número
                     </button>
-                    <button
-                      type="button"
-                      data-request-update="1"
-                      data-pro-id="${escapeHtml(pro.id)}"
-                      data-pro-name="${escapeHtml(pro.nome)}"
-                      data-pro-phone="${escapeHtml(waDigits)}"
-                      class="px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer"
-                      title="Solicitar alteração deste cadastro"
-                    >
-                      Solicitar alteração
-                    </button>
                   </div>
                 </article>
               `;
@@ -815,21 +839,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         resultsList.addEventListener('click', (e) => {
-          const requestBtn = e.target.closest('[data-request-update]');
-          if (requestBtn) {
-            openUpdateRequestModal({
-              id: requestBtn.getAttribute('data-pro-id'),
-              nome: requestBtn.getAttribute('data-pro-name'),
-              whatsapp: requestBtn.getAttribute('data-pro-phone')
-            });
-            return;
-          }
-
           const copyBtn = e.target.closest('[data-copy-phone]');
           if (!copyBtn) return;
           const phone = copyBtn.getAttribute('data-copy-phone');
           if (copyTextFallback(phone)) {
             showToast(`Número ${formatPhone(phone)} copiado!`);
+          }
+        });
+
+        updateRequestProfessionalPhone.addEventListener('input', () => {
+          const digits = onlyDigits(updateRequestProfessionalPhone.value).slice(0, 11);
+          if (updateRequestProfessionalPhone.value !== digits) {
+            updateRequestProfessionalPhone.value = digits;
           }
         });
 
@@ -854,14 +875,28 @@ document.addEventListener('DOMContentLoaded', function () {
           }
 
           const profissionalId = updateRequestProfessionalId.value.trim();
-          const nomeAtual = updateRequestProfessionalName.textContent.trim();
-          const whatsappAtual = onlyDigits(updateRequestProfessionalPhone.textContent);
+          const nomeAtual = updateRequestProfessionalName.value.trim();
+          const whatsappAtual = onlyDigits(updateRequestProfessionalPhone.value);
           const campoSolicitado = updateRequestField.value.trim();
           const valorSugerido = updateRequestValue.value.trim();
           const mensagem = updateRequestMessage.value.trim();
           const contatoSolicitante = onlyDigits(updateRequestContact.value);
 
           let valid = true;
+          if (nomeAtual.length < 2) {
+            showInlineError(errUpdateName, 'Informe o nome atual do cadastro.');
+            valid = false;
+          } else {
+            showInlineError(errUpdateName, '');
+          }
+
+          if (whatsappAtual.length < 10 || whatsappAtual.length > 11) {
+            showInlineError(errUpdatePhone, 'Informe o WhatsApp atual com DDD (10 ou 11 dígitos).');
+            valid = false;
+          } else {
+            showInlineError(errUpdatePhone, '');
+          }
+
           if (!campoSolicitado) {
             showInlineError(errUpdateField, 'Selecione o campo que precisa alterar.');
             valid = false;
@@ -917,6 +952,9 @@ document.addEventListener('DOMContentLoaded', function () {
           }
           if (!inputCidade.contains(e.target) && !citySuggestions.contains(e.target)) {
             citySuggestions.classList.add('hidden');
+          }
+          if (!btnSearchActions.contains(e.target) && !searchActionsMenu.contains(e.target)) {
+            closeSearchActionsMenu();
           }
         });
 
