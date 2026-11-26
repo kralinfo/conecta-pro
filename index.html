@@ -496,12 +496,25 @@
             </button>
           </div>
           <pre id="apps-script-code" class="max-h-40 overflow-auto rounded-2xl bg-slate-900 text-slate-100 p-3.5 text-[11px] font-mono leading-relaxed select-all">const SHEET_NAME = 'Profissionais';
+const REQUESTS_SHEET_NAME = 'PedidosAlteracao';
 const HEADERS = ['ID', 'Nome', 'Profissao', 'Cidade', 'WhatsApp', 'DataCadastro'];
+const REQUEST_HEADERS = [
+  'PedidoID', 'DataSolicitacao', 'Status', 'ProfissionalID',
+  'NomeAtualInformado', 'WhatsAppAtualInformado', 'CampoSolicitado',
+  'ValorSugerido', 'MensagemSolicitante', 'ContatoSolicitante', 'Canal'
+];
 
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
   if (sheet.getLastRow() === 0) sheet.appendRow(HEADERS);
+  return sheet;
+}
+
+function getRequestsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(REQUESTS_SHEET_NAME) || ss.insertSheet(REQUESTS_SHEET_NAME);
+  if (sheet.getLastRow() === 0) sheet.appendRow(REQUEST_HEADERS);
   return sheet;
 }
 
@@ -533,7 +546,7 @@ function doGet(e) {
         criadoEm: String(r[5] || '')
       });
     }
-    return sendResponse({ status: 'ok', ok: true, items: items.reverse() }, cb);
+    return sendResponse({ status: 'ok', ok: true, items: items.reverse(), supportedActions: ['create_professional', 'request_update'] }, cb);
   } catch (err) {
     return sendResponse({ status: 'error', ok: false, message: err.message }, cb);
   }
@@ -541,10 +554,32 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    const sheet = getSheet();
     const data = JSON.parse(e.postData.contents);
-    const id = String(data.id || Date.now());
+    const action = String(data.action || 'create_professional').trim();
     const agora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
+
+    if (action === 'request_update') {
+      const reqSheet = getRequestsSheet();
+      const pedidoId = String(data.pedidoId || Date.now());
+      reqSheet.appendRow([
+        pedidoId,
+        agora,
+        'novo',
+        String(data.profissionalId || '').trim(),
+        String(data.nomeAtual || '').trim(),
+        String(data.whatsappAtual || '').replace(/\D/g, ''),
+        String(data.campoSolicitado || '').trim(),
+        String(data.valorSugerido || '').trim(),
+        String(data.mensagem || '').trim(),
+        String(data.contatoSolicitante || '').replace(/\D/g, ''),
+        'app'
+      ]);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'ok', ok: true, id: pedidoId, acceptedAction: action }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const sheet = getSheet();
+    const id = String(data.id || Date.now());
     sheet.appendRow([
       id,
       String(data.nome || '').trim(),
@@ -553,7 +588,7 @@ function doPost(e) {
       String(data.whatsapp || '').replace(/\D/g, ''),
       agora
     ]);
-    return ContentService.createTextOutput(JSON.stringify({ status: 'ok', ok: true, id: id }))
+    return ContentService.createTextOutput(JSON.stringify({ status: 'ok', ok: true, id: id, acceptedAction: action }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', ok: false, message: err.message }))
@@ -565,6 +600,110 @@ function doPost(e) {
           </p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal de Solicitação de Alteração de Cadastro -->
+  <div
+    id="update-request-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-xl p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900">Solicitar alteração de cadastro</h3>
+          <p class="text-xs text-slate-500 mt-1">Seu pedido será analisado antes da atualização.</p>
+        </div>
+        <button
+          type="button"
+          id="btn-close-update-request-modal"
+          class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+          title="Fechar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="update-request-form" class="mt-5 space-y-4" novalidate>
+        <input type="hidden" id="update-request-professional-id" />
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xs sm:text-sm text-slate-600 space-y-1">
+          <p><strong>Profissional:</strong> <span id="update-request-professional-name">-</span></p>
+          <p><strong>WhatsApp atual:</strong> <span id="update-request-professional-phone">-</span></p>
+        </div>
+
+        <div>
+          <label for="update-request-field" class="block text-sm font-semibold text-slate-700 mb-1.5">O que precisa alterar? <span class="text-rose-500">*</span></label>
+          <select
+            id="update-request-field"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm bg-white"
+          >
+            <option value="">Selecione um campo...</option>
+            <option value="nome">Nome</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="profissao">Profissão</option>
+            <option value="cidade">Cidade</option>
+            <option value="outro">Outro</option>
+          </select>
+          <p id="err-update-field" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+        </div>
+
+        <div>
+          <label for="update-request-value" class="block text-sm font-semibold text-slate-700 mb-1.5">Novo valor sugerido <span class="text-rose-500">*</span></label>
+          <input
+            type="text"
+            id="update-request-value"
+            placeholder="Ex.: João da Silva / 11999998888"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm"
+          />
+          <p id="err-update-value" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+        </div>
+
+        <div>
+          <label for="update-request-message" class="block text-sm font-semibold text-slate-700 mb-1.5">Mensagem <span class="text-rose-500">*</span></label>
+          <textarea
+            id="update-request-message"
+            rows="4"
+            maxlength="700"
+            placeholder="Explique rapidamente o que está incorreto no cadastro."
+            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm resize-y"
+          ></textarea>
+          <p id="err-update-message" class="hidden mt-1.5 text-xs font-medium text-rose-600"></p>
+        </div>
+
+        <div>
+          <label for="update-request-contact" class="block text-sm font-semibold text-slate-700 mb-1.5">Seu contato para retorno (opcional)</label>
+          <input
+            type="tel"
+            id="update-request-contact"
+            inputmode="numeric"
+            maxlength="11"
+            placeholder="WhatsApp com DDD"
+            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-500 outline-none transition text-sm"
+          />
+        </div>
+
+        <div class="pt-1 flex items-center gap-2">
+          <button
+            type="submit"
+            id="btn-send-update-request"
+            class="flex-1 py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition cursor-pointer"
+          >
+            Enviar pedido
+          </button>
+          <button
+            type="button"
+            id="btn-cancel-update-request"
+            class="py-3.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -695,6 +834,16 @@ function doPost(e) {
           }, 2600);
         }
 
+        function showInlineError(el, message) {
+          if (!el) return;
+          if (message) {
+            el.textContent = message;
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        }
+
         function copyTextFallback(text) {
           try {
             const ta = document.createElement('textarea');
@@ -719,6 +868,8 @@ function doPost(e) {
         let citiesList = Array.from(new Set([...INITIAL_CITIES, ...safeGetStorage(KEYS.CITIES_CACHE, [])]));
         let isSyncing = false;
         let lastRegisteredQuery = '';
+        let lastUpdateRequestAt = 0;
+        let supportsUpdateRequests = false;
 
         // Prioriza DEFAULT_APPS_SCRIPT_URL sempre que não houver customização manual explícita
         function getActiveSheetsUrl() {
@@ -795,6 +946,23 @@ function doPost(e) {
         const btnCopyAppsScript = document.getElementById('btn-copy-apps-script');
         const copyScriptLabel = document.getElementById('copy-script-label');
         const appsScriptCode = document.getElementById('apps-script-code');
+
+        // Modal pedido de alteração
+        const updateRequestModal = document.getElementById('update-request-modal');
+        const btnCloseUpdateRequestModal = document.getElementById('btn-close-update-request-modal');
+        const btnCancelUpdateRequest = document.getElementById('btn-cancel-update-request');
+        const updateRequestForm = document.getElementById('update-request-form');
+        const updateRequestProfessionalId = document.getElementById('update-request-professional-id');
+        const updateRequestProfessionalName = document.getElementById('update-request-professional-name');
+        const updateRequestProfessionalPhone = document.getElementById('update-request-professional-phone');
+        const updateRequestField = document.getElementById('update-request-field');
+        const updateRequestValue = document.getElementById('update-request-value');
+        const updateRequestMessage = document.getElementById('update-request-message');
+        const updateRequestContact = document.getElementById('update-request-contact');
+        const btnSendUpdateRequest = document.getElementById('btn-send-update-request');
+        const errUpdateField = document.getElementById('err-update-field');
+        const errUpdateValue = document.getElementById('err-update-value');
+        const errUpdateMessage = document.getElementById('err-update-message');
 
         // ---------------------------------------------------------
         // 5. NAVEGAÇÃO ENTRE AS 3 TELAS
@@ -883,6 +1051,15 @@ function doPost(e) {
           return arr.map(normalizeRecord).filter(Boolean);
         }
 
+        function payloadSupportsUpdateRequests(payload) {
+          return !!(
+            payload &&
+            typeof payload === 'object' &&
+            Array.isArray(payload.supportedActions) &&
+            payload.supportedActions.includes('request_update')
+          );
+        }
+
         function fetchViaJsonp(baseUrl, timeoutMs = 9500) {
           return new Promise((resolve, reject) => {
             const cbName = '__cp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
@@ -933,14 +1110,18 @@ function doPost(e) {
             const json = await res.json();
             const parsed = extractRecordsFromPayload(json);
             if (parsed !== null) {
-              return { records: parsed, via: 'fetch' };
+              return { records: parsed, via: 'fetch', supportsUpdateRequests: payloadSupportsUpdateRequests(json) };
             }
             throw new Error('Formato de resposta inválido');
           } catch (fetchErr) {
             const jsonpPayload = await fetchViaJsonp(url, 9500);
             const parsedJsonp = extractRecordsFromPayload(jsonpPayload);
             if (parsedJsonp !== null) {
-              return { records: parsedJsonp, via: 'jsonp' };
+              return {
+                records: parsedJsonp,
+                via: 'jsonp',
+                supportsUpdateRequests: payloadSupportsUpdateRequests(jsonpPayload)
+              };
             }
             throw fetchErr;
           }
@@ -955,7 +1136,8 @@ function doPost(e) {
           refreshLabel.textContent = 'Sincronizando...';
 
           try {
-            const { records } = await readFromAppsScript(url);
+            const { records, supportsUpdateRequests: supportsUpdate } = await readFromAppsScript(url);
+            supportsUpdateRequests = supportsUpdate;
             if (records.length > 0) {
               professionals = records;
               safeSetStorage(KEYS.PROFESSIONALS, professionals);
@@ -997,6 +1179,7 @@ function doPost(e) {
           if (!url) return { ok: false };
 
           const payloadStr = JSON.stringify({
+            action: 'create_professional',
             id: record.id,
             nome: record.nome,
             profissao: record.profissao,
@@ -1029,6 +1212,41 @@ function doPost(e) {
           }
         }
 
+        async function saveUpdateRequestToSheets(requestData) {
+          const url = getActiveSheetsUrl();
+          if (!url) return { ok: false, reason: 'missing_url' };
+
+          const payloadStr = JSON.stringify({
+            action: 'request_update',
+            pedidoId: String(Date.now()),
+            profissionalId: String(requestData.profissionalId || '').trim(),
+            nomeAtual: String(requestData.nomeAtual || '').trim(),
+            whatsappAtual: onlyDigits(requestData.whatsappAtual || ''),
+            campoSolicitado: String(requestData.campoSolicitado || '').trim(),
+            valorSugerido: String(requestData.valorSugerido || '').trim(),
+            mensagem: String(requestData.mensagem || '').trim(),
+            contatoSolicitante: onlyDigits(requestData.contatoSolicitante || ''),
+            canal: 'app'
+          });
+
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              redirect: 'follow',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: payloadStr
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (data && data.ok && data.acceptedAction === 'request_update') {
+              return { ok: true, mode: 'cors' };
+            }
+            return { ok: false, reason: 'unsupported_action' };
+          } catch (_) {
+            return { ok: false };
+          }
+        }
+
         // ---------------------------------------------------------
         // 7. MODAL DE CONFIGURAÇÃO DO GOOGLE SHEETS
         // ---------------------------------------------------------
@@ -1040,6 +1258,36 @@ function doPost(e) {
 
         function closeSheetsModal() {
           sheetsModal.classList.add('hidden');
+        }
+
+        function resetUpdateRequestForm() {
+          updateRequestForm.reset();
+          updateRequestProfessionalId.value = '';
+          updateRequestProfessionalName.textContent = '-';
+          updateRequestProfessionalPhone.textContent = '-';
+          showInlineError(errUpdateField, '');
+          showInlineError(errUpdateValue, '');
+          showInlineError(errUpdateMessage, '');
+        }
+
+        function openUpdateRequestModal(pro) {
+          updateRequestProfessionalId.value = String(pro.id || '').trim();
+          updateRequestProfessionalName.textContent = pro.nome || '-';
+          updateRequestProfessionalPhone.textContent = formatPhone(pro.whatsapp || '');
+          updateRequestField.value = '';
+          updateRequestValue.value = '';
+          updateRequestMessage.value = '';
+          updateRequestContact.value = '';
+          showInlineError(errUpdateField, '');
+          showInlineError(errUpdateValue, '');
+          showInlineError(errUpdateMessage, '');
+          updateRequestModal.classList.remove('hidden');
+          setTimeout(() => updateRequestField.focus(), 40);
+        }
+
+        function closeUpdateRequestModal() {
+          updateRequestModal.classList.add('hidden');
+          resetUpdateRequestForm();
         }
 
         function setSheetsFeedback(msg, type) {
@@ -1063,6 +1311,15 @@ function doPost(e) {
           if (e.key === 'Escape' && !sheetsModal.classList.contains('hidden')) {
             closeSheetsModal();
           }
+          if (e.key === 'Escape' && !updateRequestModal.classList.contains('hidden')) {
+            closeUpdateRequestModal();
+          }
+        });
+
+        btnCloseUpdateRequestModal.addEventListener('click', closeUpdateRequestModal);
+        btnCancelUpdateRequest.addEventListener('click', closeUpdateRequestModal);
+        updateRequestModal.addEventListener('click', (e) => {
+          if (e.target === updateRequestModal) closeUpdateRequestModal();
         });
 
         btnRestoreDefaultUrl.addEventListener('click', () => {
@@ -1081,9 +1338,10 @@ function doPost(e) {
           btnTestSheets.disabled = true;
           setSheetsFeedback('Testando conexão com a planilha...', 'info');
           try {
-            const { records, via } = await readFromAppsScript(candidate);
+            const { records, via, supportsUpdateRequests: supportsUpdate } = await readFromAppsScript(candidate);
+            supportsUpdateRequests = supportsUpdate;
             setSheetsFeedback(
-              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.`,
+              `Conexão confirmada (${via.toUpperCase()})! ${records.length} profissional(is) lido(s) da planilha.${supportsUpdate ? ' Pedidos de alteração: habilitado.' : ' Pedidos de alteração: atualize o Apps Script.'}`,
               'success'
             );
           } catch (_) {
@@ -1312,6 +1570,17 @@ function doPost(e) {
                     >
                       Copiar número
                     </button>
+                    <button
+                      type="button"
+                      data-request-update="1"
+                      data-pro-id="${escapeHtml(pro.id)}"
+                      data-pro-name="${escapeHtml(pro.nome)}"
+                      data-pro-phone="${escapeHtml(waDigits)}"
+                      class="px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer"
+                      title="Solicitar alteração deste cadastro"
+                    >
+                      Solicitar alteração
+                    </button>
                   </div>
                 </article>
               `;
@@ -1344,11 +1613,101 @@ function doPost(e) {
         });
 
         resultsList.addEventListener('click', (e) => {
+          const requestBtn = e.target.closest('[data-request-update]');
+          if (requestBtn) {
+            openUpdateRequestModal({
+              id: requestBtn.getAttribute('data-pro-id'),
+              nome: requestBtn.getAttribute('data-pro-name'),
+              whatsapp: requestBtn.getAttribute('data-pro-phone')
+            });
+            return;
+          }
+
           const copyBtn = e.target.closest('[data-copy-phone]');
           if (!copyBtn) return;
           const phone = copyBtn.getAttribute('data-copy-phone');
           if (copyTextFallback(phone)) {
             showToast(`Número ${formatPhone(phone)} copiado!`);
+          }
+        });
+
+        updateRequestContact.addEventListener('input', () => {
+          const digits = onlyDigits(updateRequestContact.value).slice(0, 11);
+          if (updateRequestContact.value !== digits) {
+            updateRequestContact.value = digits;
+          }
+        });
+
+        updateRequestForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          if (!supportsUpdateRequests) {
+            showToast('Atualize o Apps Script antes de enviar pedidos de alteração.');
+            return;
+          }
+
+          const now = Date.now();
+          if (now - lastUpdateRequestAt < 60000) {
+            showToast('Aguarde 1 minuto antes de enviar outro pedido.');
+            return;
+          }
+
+          const profissionalId = updateRequestProfessionalId.value.trim();
+          const nomeAtual = updateRequestProfessionalName.textContent.trim();
+          const whatsappAtual = onlyDigits(updateRequestProfessionalPhone.textContent);
+          const campoSolicitado = updateRequestField.value.trim();
+          const valorSugerido = updateRequestValue.value.trim();
+          const mensagem = updateRequestMessage.value.trim();
+          const contatoSolicitante = onlyDigits(updateRequestContact.value);
+
+          let valid = true;
+          if (!campoSolicitado) {
+            showInlineError(errUpdateField, 'Selecione o campo que precisa alterar.');
+            valid = false;
+          } else {
+            showInlineError(errUpdateField, '');
+          }
+
+          if (valorSugerido.length < 2) {
+            showInlineError(errUpdateValue, 'Informe o novo valor sugerido.');
+            valid = false;
+          } else {
+            showInlineError(errUpdateValue, '');
+          }
+
+          if (mensagem.length < 10) {
+            showInlineError(errUpdateMessage, 'Escreva uma mensagem com pelo menos 10 caracteres.');
+            valid = false;
+          } else {
+            showInlineError(errUpdateMessage, '');
+          }
+
+          if (!valid) return;
+
+          btnSendUpdateRequest.disabled = true;
+          btnSendUpdateRequest.textContent = 'Enviando...';
+
+          const result = await saveUpdateRequestToSheets({
+            profissionalId,
+            nomeAtual,
+            whatsappAtual,
+            campoSolicitado,
+            valorSugerido,
+            mensagem,
+            contatoSolicitante
+          });
+
+          btnSendUpdateRequest.disabled = false;
+          btnSendUpdateRequest.textContent = 'Enviar pedido';
+
+          if (result.ok) {
+            lastUpdateRequestAt = Date.now();
+            closeUpdateRequestModal();
+            showToast('Pedido enviado! Vamos analisar e corrigir se aprovado.');
+          } else if (result.reason === 'unsupported_action') {
+            showToast('Atualize o Apps Script para habilitar pedidos de alteração.');
+          } else {
+            showToast('Não foi possível enviar agora. Tente novamente em instantes.');
           }
         });
 
