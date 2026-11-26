@@ -110,9 +110,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const searchResultsWrapper = document.getElementById('search-results-wrapper');
         const resultsCount = document.getElementById('results-count');
         const resultsList = document.getElementById('results-list');
-        const btnRefreshSheets = document.getElementById('btn-refresh-sheets');
-        const refreshIcon = document.getElementById('refresh-icon');
-        const refreshLabel = document.getElementById('refresh-label');
         const btnSearchActions = document.getElementById('btn-search-actions');
         const searchActionsMenu = document.getElementById('search-actions-menu');
         const btnOpenUpdateRequest = document.getElementById('btn-open-update-request');
@@ -339,8 +336,10 @@ document.addEventListener('DOMContentLoaded', function () {
           if (!url || isSyncing) return false;
 
           isSyncing = true;
-          refreshIcon.classList.add('animate-spin');
-          refreshLabel.textContent = 'Sincronizando...';
+          const refreshIcon = document.getElementById('refresh-icon');
+          const refreshLabel = document.getElementById('refresh-label');
+          if (refreshIcon) refreshIcon.classList.add('animate-spin');
+          if (refreshLabel) refreshLabel.textContent = 'Sincronizando...';
 
           try {
             const { records, supportedActions } = await readFromAppsScript(url);
@@ -378,8 +377,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
           } finally {
             isSyncing = false;
-            refreshIcon.classList.remove('animate-spin');
-            refreshLabel.textContent = 'Atualizar lista';
+            if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+            if (refreshLabel) refreshLabel.textContent = 'Atualizar lista';
           }
         }
 
@@ -622,8 +621,6 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => { copyScriptLabel.textContent = 'Copiar código do Apps Script'; }, 2200);
           }
         });
-
-        btnRefreshSheets.addEventListener('click', () => syncFromSheets(false));
 
         // ---------------------------------------------------------
         // 8. BUSCA UNIFICADA + AUTOCOMPLETE + CARDS DE RESULTADO
