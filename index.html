@@ -196,6 +196,16 @@
         class="hidden mt-1 px-1 text-right text-xs sm:text-sm italic text-slate-400"
       ></p>
 
+      <div id="city-detail-search-wrapper" class="hidden mt-3 relative w-full">
+        <input
+          type="text"
+          id="city-detail-search-input"
+          autocomplete="off"
+          placeholder="Filtrar na cidade por nome ou profissão..."
+          class="w-full px-4 py-3 text-sm sm:text-base bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl shadow-sm outline-none transition placeholder:text-slate-400"
+        />
+      </div>
+
       <!-- Container de resultados (vazio inicialmente) -->
       <div id="search-results-wrapper" class="hidden mt-6 flex-col gap-3">
         <div class="flex items-center justify-between px-1">
@@ -742,6 +752,8 @@ function doPost(e) {
         const btnClearSearch = document.getElementById('btn-clear-search');
         const searchHint = document.getElementById('search-hint');
         const cityTotalHint = document.getElementById('city-total-hint');
+        const cityDetailSearchWrapper = document.getElementById('city-detail-search-wrapper');
+        const cityDetailSearchInput = document.getElementById('city-detail-search-input');
         const searchSuggestions = document.getElementById('search-suggestions');
         const searchResultsWrapper = document.getElementById('search-results-wrapper');
         const resultsCount = document.getElementById('results-count');
@@ -1198,9 +1210,12 @@ function doPost(e) {
             const totalByCity = professionals.filter((item) => normalizeText(item.cidade) === normalizeText(cityMatch)).length;
             cityTotalHint.textContent = `${totalByCity} profissional${totalByCity === 1 ? '' : 'is'} em ${cityMatch}`;
             cityTotalHint.classList.remove('hidden');
+            cityDetailSearchWrapper.classList.remove('hidden');
           } else {
             cityTotalHint.textContent = '';
             cityTotalHint.classList.add('hidden');
+            cityDetailSearchWrapper.classList.add('hidden');
+            cityDetailSearchInput.value = '';
           }
 
           if (!rawQuery) {
@@ -1210,10 +1225,23 @@ function doPost(e) {
           }
 
           const terms = normalizeText(rawQuery).split(/\s+/).filter(Boolean);
-          const filtered = professionals.filter((item) => {
+          let filtered = professionals.filter((item) => {
             const haystack = normalizeText(`${item.nome} ${item.profissao} ${item.cidade}`);
             return terms.every((t) => haystack.includes(t));
           });
+
+          if (cityMatch) {
+            const cityProfessionals = professionals.filter(
+              (item) => normalizeText(item.cidade) === normalizeText(cityMatch)
+            );
+            const detailTerms = normalizeText(cityDetailSearchInput.value.trim()).split(/\s+/).filter(Boolean);
+            filtered = detailTerms.length
+              ? cityProfessionals.filter((item) => {
+                  const detailHaystack = normalizeText(`${item.nome} ${item.profissao}`);
+                  return detailTerms.every((t) => detailHaystack.includes(t));
+                })
+              : cityProfessionals;
+          }
 
           searchResultsWrapper.classList.remove('hidden');
           searchResultsWrapper.classList.add('flex');
@@ -1293,6 +1321,10 @@ function doPost(e) {
 
         searchInput.addEventListener('input', () => {
           buildSearchSuggestions(searchInput.value);
+          renderSearchResults();
+        });
+
+        cityDetailSearchInput.addEventListener('input', () => {
           renderSearchResults();
         });
 
